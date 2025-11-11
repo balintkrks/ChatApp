@@ -38,6 +38,7 @@ class Program
                 if (msg == null) break;
                 if (string.IsNullOrWhiteSpace(msg)) continue;
 
+                
                 if (msg.StartsWith("USERNAME:"))
                 {
                     username = msg.Substring("USERNAME:".Length);
@@ -45,6 +46,51 @@ class Program
                     continue;
                 }
 
+                
+                if (msg.StartsWith("REGISTER:"))
+                {
+                    var parts = msg.Split(':');
+                    if (parts.Length >= 3)
+                    {
+                        string user = parts[1];
+                        string pass = parts[2];
+                        bool ok = Database.AddUser(user, pass);
+                        await Protocol.SendMessageAsync(stream, ok ? "SERVER: Registration successful" : "SERVER: Registration failed");
+                    }
+                    else
+                    {
+                        await Protocol.SendMessageAsync(stream, "SERVER: Invalid REGISTER format");
+                    }
+                    continue;
+                }
+
+                
+                if (msg.StartsWith("LOGIN:"))
+                {
+                    var parts = msg.Split(':');
+                    if (parts.Length >= 3)
+                    {
+                        string user = parts[1];
+                        string pass = parts[2];
+                        bool ok = Database.ValidateUser(user, pass);
+                        if (ok)
+                        {
+                            username = user;
+                            await Protocol.SendMessageAsync(stream, "SERVER: Login successful");
+                        }
+                        else
+                        {
+                            await Protocol.SendMessageAsync(stream, "SERVER: Login failed");
+                        }
+                    }
+                    else
+                    {
+                        await Protocol.SendMessageAsync(stream, "SERVER: Invalid LOGIN format");
+                    }
+                    continue;
+                }
+
+               
                 Database.AddMessage(username, msg);
                 string broadcast = $"{username}: {msg}";
                 Console.WriteLine(broadcast);
@@ -65,7 +111,7 @@ class Program
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Hiba: {ex.Message}");
+            Console.WriteLine($"Hiba a kliensnél: {ex.Message}");
         }
         finally
         {
