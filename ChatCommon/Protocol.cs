@@ -19,18 +19,26 @@ namespace ChatCommon
         public static async Task<string?> ReceiveMessageAsync(Stream stream)
         {
             var lenBuf = new byte[4];
-            int read = await stream.ReadAsync(lenBuf, 0, 4);
-            if (read < 4) return null;
+            int got = 0;
+            while (got < 4)
+            {
+                int r = await stream.ReadAsync(lenBuf, got, 4 - got);
+                if (r == 0) return null; 
+                got += r;
+            }
+
             int len = BitConverter.ToInt32(lenBuf, 0);
+            if (len <= 0) return string.Empty;
 
             var buf = new byte[len];
-            int received = 0;
-            while (received < len)
+            int read = 0;
+            while (read < len)
             {
-                int r = await stream.ReadAsync(buf, received, len - received);
+                int r = await stream.ReadAsync(buf, read, len - read);
                 if (r == 0) return null;
-                received += r;
+                read += r;
             }
+
             return Encoding.UTF8.GetString(buf);
         }
     }
