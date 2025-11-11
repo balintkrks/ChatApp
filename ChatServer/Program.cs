@@ -2,6 +2,7 @@
 using System.Net.Sockets;
 using System.Collections.Concurrent;
 using ChatCommon;
+using ChatCommon.Utils;  
 using ChatServer.Data;
 
 class Program
@@ -38,7 +39,6 @@ class Program
                 if (msg == null) break;
                 if (string.IsNullOrWhiteSpace(msg)) continue;
 
-                
                 if (msg.StartsWith("USERNAME:"))
                 {
                     username = msg.Substring("USERNAME:".Length);
@@ -46,7 +46,6 @@ class Program
                     continue;
                 }
 
-                
                 if (msg.StartsWith("REGISTER:"))
                 {
                     var parts = msg.Split(':');
@@ -54,7 +53,9 @@ class Program
                     {
                         string user = parts[1];
                         string pass = parts[2];
-                        bool ok = Database.AddUser(user, pass);
+                        string passHash = HashHelper.Sha256(pass);
+
+                        bool ok = Database.AddUser(user, passHash);
                         await Protocol.SendMessageAsync(stream, ok ? "SERVER: Registration successful" : "SERVER: Registration failed");
                     }
                     else
@@ -64,7 +65,6 @@ class Program
                     continue;
                 }
 
-                
                 if (msg.StartsWith("LOGIN:"))
                 {
                     var parts = msg.Split(':');
@@ -72,7 +72,9 @@ class Program
                     {
                         string user = parts[1];
                         string pass = parts[2];
-                        bool ok = Database.ValidateUser(user, pass);
+                        string passHash = HashHelper.Sha256(pass);
+
+                        bool ok = Database.ValidateUser(user, passHash);
                         if (ok)
                         {
                             username = user;
@@ -90,7 +92,6 @@ class Program
                     continue;
                 }
 
-               
                 Database.AddMessage(username, msg);
                 string broadcast = $"{username}: {msg}";
                 Console.WriteLine(broadcast);
