@@ -1,5 +1,6 @@
 ﻿using System.Net.Sockets;
 using ChatCommon;
+using System.Linq;
 
 class Program
 {
@@ -42,7 +43,6 @@ class Program
                 if (parts.Length >= 3)
                 {
                     var user = parts[1];
-                    
                     var pass = string.Join(' ', parts.Skip(2));
                     await Protocol.SendMessageAsync(stream, $"REGISTER:{user}:{pass}");
                 }
@@ -70,6 +70,7 @@ class Program
                 continue;
             }
 
+            
             await Protocol.SendMessageAsync(stream, input);
         }
 
