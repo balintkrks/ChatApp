@@ -9,9 +9,22 @@ class Program
         await client.ConnectAsync("127.0.0.1", 5000);
         var stream = client.GetStream();
 
-        Console.WriteLine("Csatlakoztál a szerverhez.");
-        Console.WriteLine("Írj be egy üzenetet:");
+        Console.Write("Felhasználónév: ");
+        string username = Console.ReadLine() ?? "Anon";
+        await Protocol.SendMessageAsync(stream, $"USERNAME:{username}");
 
+        // Olvasó task
+        _ = Task.Run(async () =>
+        {
+            while (true)
+            {
+                var msg = await Protocol.ReceiveMessageAsync(stream);
+                if (msg == null) break;
+                Console.WriteLine($"<<< {msg}");
+            }
+        });
+
+        // Küldés loop
         while (true)
         {
             string? input = Console.ReadLine();
@@ -19,8 +32,6 @@ class Program
             if (input.Equals("/quit", StringComparison.OrdinalIgnoreCase)) break;
 
             await Protocol.SendMessageAsync(stream, input);
-            var response = await Protocol.ReceiveMessageAsync(stream);
-            Console.WriteLine($"<<< {response}");
         }
 
         client.Close();
