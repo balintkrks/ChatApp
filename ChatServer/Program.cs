@@ -33,15 +33,25 @@ class Program
             var msg = await Protocol.ReceiveMessageAsync(stream);
             if (msg == null) break;
 
+           
+            if (msg.StartsWith("USERNAME:"))
+            {
+                username = msg.Substring("USERNAME:".Length);
+                await Protocol.SendMessageAsync(stream, $"SERVER: Username set to {username}");
+                continue;
+            }
+
             
             Database.AddMessage(username, msg);
-
             string broadcast = $"{username}: {msg}";
             Console.WriteLine(broadcast);
+
+            
             await Protocol.SendMessageAsync(stream, $"Echo: {msg}");
         }
 
         client.Close();
         Console.WriteLine("Kliens bontotta.");
     }
+
 }
