@@ -1,35 +1,32 @@
 ﻿using System.Net;
 using System.Net.Sockets;
 using ChatCommon;
-using System.Collections.Concurrent;
+using ChatServer.Data; 
 
 class Program
 {
-    static TcpListener listener;
-    static ConcurrentDictionary<int, TcpClient> clients = new();
-    static int clientIdSeq = 0;
-
     static async Task Main()
     {
-        listener = new TcpListener(IPAddress.Any, 5000);
+       
+        Database.Init();
+
+       
+        var listener = new TcpListener(IPAddress.Any, 5000);
         listener.Start();
         Console.WriteLine("Szerver fut a 5000-es porton.");
 
         while (true)
         {
             var client = await listener.AcceptTcpClientAsync();
-            int id = Interlocked.Increment(ref clientIdSeq);
-            clients[id] = client;
-            Console.WriteLine($"Kliens csatlakozott (id={id}).");
-
-            _ = HandleClient(id, client);
+            _ = HandleClient(client);
         }
     }
 
-    static async Task HandleClient(int id, TcpClient client)
+    static async Task HandleClient(TcpClient client)
     {
+        Console.WriteLine("Kliens csatlakozott.");
         var stream = client.GetStream();
-        string username = $"User{id}";
+        string username = "Anon";
 
         while (true)
         {
@@ -37,39 +34,14 @@ class Program
             if (msg == null) break;
 
             
-            if (msg.StartsWith("USERNAME:"))
-            {
-                username = msg.Substring("USERNAME:".Length).Trim();
-                Console.WriteLine($"id={id} beállította a nevét: {username}");
-                await Protocol.SendMessageAsync(stream, $"SERVER: Üdv, {username}!");
-                continue;
-            }
+            Database.AddMessage(username, msg);
 
-          
             string broadcast = $"{username}: {msg}";
             Console.WriteLine(broadcast);
-            await BroadcastAsync(broadcast, excludeId: id);
+            await Protocol.SendMessageAsync(stream, $"Echo: {msg}");
         }
 
-        clients.TryRemove(id, out _);
         client.Close();
-        Console.WriteLine($"Kliens bontotta (id={id}).");
-    }
-
-    static async Task BroadcastAsync(string message, int? excludeId = null)
-    {
-        foreach (var kv in clients)
-        {
-            if (excludeId.HasValue && kv.Key == excludeId.Value) continue;
-            var c = kv.Value;
-            try
-            {
-                await Protocol.SendMessageAsync(c.GetStream(), message);
-            }
-            catch
-            {
-                
-            }
-        }
+        Console.WriteLine("Kliens bontotta.");
     }
 }
