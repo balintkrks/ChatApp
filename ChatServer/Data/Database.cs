@@ -6,7 +6,6 @@ namespace ChatServer.Data
     {
         private const string ConnectionString = "Data Source=chat.db";
 
-        
         public static void Init()
         {
             using var conn = new SqliteConnection(ConnectionString);
@@ -30,7 +29,6 @@ namespace ChatServer.Data
             cmd.ExecuteNonQuery();
         }
 
-        
         public static void AddMessage(string sender, string content)
         {
             using var conn = new SqliteConnection(ConnectionString);
@@ -43,8 +41,6 @@ namespace ChatServer.Data
             cmd.Parameters.AddWithValue("$t", DateTime.UtcNow.ToString("o"));
             cmd.ExecuteNonQuery();
         }
-
-
 
         public static bool AddUser(string username, string passwordHash)
         {
@@ -63,7 +59,7 @@ namespace ChatServer.Data
             }
             catch
             {
-                return false; 
+                return false;
             }
         }
 
@@ -80,6 +76,5 @@ namespace ChatServer.Data
             long count = (long)cmd.ExecuteScalar();
             return count > 0;
         }
-
     }
 }
