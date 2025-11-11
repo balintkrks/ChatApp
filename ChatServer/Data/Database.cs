@@ -43,5 +43,43 @@ namespace ChatServer.Data
             cmd.Parameters.AddWithValue("$t", DateTime.UtcNow.ToString("o"));
             cmd.ExecuteNonQuery();
         }
+
+
+
+        public static bool AddUser(string username, string passwordHash)
+        {
+            using var conn = new SqliteConnection(ConnectionString);
+            conn.Open();
+
+            var cmd = conn.CreateCommand();
+            cmd.CommandText = "INSERT INTO Users (Username, PasswordHash) VALUES ($u, $p)";
+            cmd.Parameters.AddWithValue("$u", username);
+            cmd.Parameters.AddWithValue("$p", passwordHash);
+
+            try
+            {
+                cmd.ExecuteNonQuery();
+                return true;
+            }
+            catch
+            {
+                return false; 
+            }
+        }
+
+        public static bool ValidateUser(string username, string passwordHash)
+        {
+            using var conn = new SqliteConnection(ConnectionString);
+            conn.Open();
+
+            var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT COUNT(*) FROM Users WHERE Username=$u AND PasswordHash=$p";
+            cmd.Parameters.AddWithValue("$u", username);
+            cmd.Parameters.AddWithValue("$p", passwordHash);
+
+            long count = (long)cmd.ExecuteScalar();
+            return count > 0;
+        }
+
     }
 }
