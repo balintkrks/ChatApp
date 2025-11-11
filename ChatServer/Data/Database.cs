@@ -1,4 +1,7 @@
 ﻿using Microsoft.Data.Sqlite;
+using ChatCommon.Models;
+using System;
+using System.Collections.Generic;
 
 namespace ChatServer.Data
 {
@@ -75,6 +78,33 @@ namespace ChatServer.Data
 
             long count = (long)cmd.ExecuteScalar();
             return count > 0;
+        }
+
+        
+        public static List<ChatMessage> GetLastMessages(int count)
+        {
+            var messages = new List<ChatMessage>();
+
+            using var conn = new SqliteConnection(ConnectionString);
+            conn.Open();
+
+            var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT Sender, Content, Timestamp FROM Messages ORDER BY Id DESC LIMIT $c";
+            cmd.Parameters.AddWithValue("$c", count);
+
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                messages.Add(new ChatMessage
+                {
+                    Sender = reader.GetString(0),
+                    Content = reader.GetString(1),
+                    Timestamp = DateTime.Parse(reader.GetString(2))
+                });
+            }
+
+            messages.Reverse(); 
+            return messages;
         }
     }
 }

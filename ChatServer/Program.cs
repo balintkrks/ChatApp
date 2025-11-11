@@ -2,7 +2,7 @@
 using System.Net.Sockets;
 using System.Collections.Concurrent;
 using ChatCommon;
-using ChatCommon.Utils;  
+using ChatCommon.Utils;   
 using ChatServer.Data;
 
 class Program
@@ -79,6 +79,13 @@ class Program
                         {
                             username = user;
                             await Protocol.SendMessageAsync(stream, "SERVER: Login successful");
+
+                            
+                            var history = Database.GetLastMessages(20);
+                            foreach (var m in history)
+                            {
+                                await Protocol.SendMessageAsync(stream, $"{m.Timestamp:HH:mm} {m.Sender}: {m.Content}");
+                            }
                         }
                         else
                         {
