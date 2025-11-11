@@ -1,5 +1,4 @@
 ﻿using Microsoft.Data.Sqlite;
-using System.Data.SQLite;
 
 namespace ChatServer.Data
 {
@@ -7,6 +6,7 @@ namespace ChatServer.Data
     {
         private const string ConnectionString = "Data Source=chat.db";
 
+        
         public static void Init()
         {
             using var conn = new SqliteConnection(ConnectionString);
@@ -30,6 +30,7 @@ namespace ChatServer.Data
             cmd.ExecuteNonQuery();
         }
 
+        
         public static void AddMessage(string sender, string content)
         {
             using var conn = new SqliteConnection(ConnectionString);
