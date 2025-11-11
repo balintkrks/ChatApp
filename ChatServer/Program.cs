@@ -37,40 +37,45 @@ class Program
             {
                 var msg = await Protocol.ReceiveMessageAsync(stream);
                 if (msg == null) break;
+                msg = msg.Trim();
                 if (string.IsNullOrWhiteSpace(msg)) continue;
 
+                
                 if (msg.StartsWith("USERNAME:"))
                 {
-                    username = msg.Substring("USERNAME:".Length);
+                    username = msg.Substring("USERNAME:".Length).Trim();
+                    if (string.IsNullOrEmpty(username)) username = "Anon";
                     await Protocol.SendMessageAsync(stream, $"SERVER: Username set to {username}");
                     continue;
                 }
 
+                
                 if (msg.StartsWith("REGISTER:"))
                 {
-                    var parts = msg.Split(':');
-                    if (parts.Length >= 3)
+                    var parts = msg.Split(':', 3, StringSplitOptions.None);
+                    if (parts.Length == 3 && !string.IsNullOrWhiteSpace(parts[1]) && !string.IsNullOrWhiteSpace(parts[2]))
                     {
-                        string user = parts[1];
-                        string pass = parts[2];
+                        string user = parts[1].Trim();
+                        string pass = parts[2]; 
                         string passHash = HashHelper.Sha256(pass);
 
                         bool ok = Database.AddUser(user, passHash);
-                        await Protocol.SendMessageAsync(stream, ok ? "SERVER: Registration successful" : "SERVER: Registration failed");
+                        await Protocol.SendMessageAsync(stream, ok ? "SERVER: Registration successful" : "SERVER: Registration failed (username may be taken)");
                     }
                     else
                     {
-                        await Protocol.SendMessageAsync(stream, "SERVER: Invalid REGISTER format");
+                        await Protocol.SendMessageAsync(stream, "SERVER: Invalid REGISTER format (use REGISTER:username:password)");
                     }
                     continue;
                 }
 
+                
                 if (msg.StartsWith("LOGIN:"))
                 {
-                    var parts = msg.Split(':');
-                    if (parts.Length >= 3)
+                    var parts = msg.Split(':', 3, StringSplitOptions.None);
+                    if (parts.Length == 3 && !string.IsNullOrWhiteSpace(parts[1]) && !string.IsNullOrWhiteSpace(parts[2]))
                     {
-                        string user = parts[1];
+                        string user = parts[1].Trim();
                         string pass = parts[2];
                         string passHash = HashHelper.Sha256(pass);
 
@@ -94,11 +99,12 @@ class Program
                     }
                     else
                     {
-                        await Protocol.SendMessageAsync(stream, "SERVER: Invalid LOGIN format");
+                        await Protocol.SendMessageAsync(stream, "SERVER: Invalid LOGIN format (use LOGIN:username:password)");
                     }
                     continue;
                 }
 
+                
                 Database.AddMessage(username, msg);
                 string broadcast = $"{username}: {msg}";
                 Console.WriteLine(broadcast);
