@@ -13,7 +13,7 @@ class Program
         string username = Console.ReadLine() ?? "Anon";
         await Protocol.SendMessageAsync(stream, $"USERNAME:{username}");
 
-        // Olvasó task
+      
       
 
         _ = Task.Run(async () =>
@@ -26,7 +26,7 @@ class Program
             }
         });
 
-        // Küldés loop
+     
 
         while (true)
         {
