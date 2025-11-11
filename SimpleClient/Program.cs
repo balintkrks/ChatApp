@@ -13,9 +13,7 @@ class Program
         string username = Console.ReadLine() ?? "Anon";
         await Protocol.SendMessageAsync(stream, $"USERNAME:{username}");
 
-      
-      
-
+        
         _ = Task.Run(async () =>
         {
             while (true)
@@ -26,13 +24,32 @@ class Program
             }
         });
 
-     
-
+       
         while (true)
         {
             string? input = Console.ReadLine();
             if (string.IsNullOrEmpty(input)) continue;
             if (input.Equals("/quit", StringComparison.OrdinalIgnoreCase)) break;
+
+            if (input.StartsWith("/register "))
+            {
+                var parts = input.Split(' ');
+                if (parts.Length == 3)
+                {
+                    await Protocol.SendMessageAsync(stream, $"REGISTER:{parts[1]}:{parts[2]}");
+                }
+                continue;
+            }
+
+            if (input.StartsWith("/login "))
+            {
+                var parts = input.Split(' ');
+                if (parts.Length == 3)
+                {
+                    await Protocol.SendMessageAsync(stream, $"LOGIN:{parts[1]}:{parts[2]}");
+                }
+                continue;
+            }
 
             await Protocol.SendMessageAsync(stream, input);
         }
