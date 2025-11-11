@@ -10,7 +10,8 @@ class Program
         var stream = client.GetStream();
 
         Console.Write("Felhasználónév: ");
-        string username = Console.ReadLine() ?? "Anon";
+        string username = (Console.ReadLine() ?? "").Trim();
+        if (string.IsNullOrEmpty(username)) username = "Anon";
         await Protocol.SendMessageAsync(stream, $"USERNAME:{username}");
 
         
@@ -24,29 +25,47 @@ class Program
             }
         });
 
-       
+        
         while (true)
         {
             string? input = Console.ReadLine();
-            if (string.IsNullOrEmpty(input)) continue;
+            if (input == null) break;
+            input = input.Trim();
+            if (input.Length == 0) continue;
+
             if (input.Equals("/quit", StringComparison.OrdinalIgnoreCase)) break;
 
-            if (input.StartsWith("/register "))
+            
+            if (input.StartsWith("/register ", StringComparison.OrdinalIgnoreCase))
             {
-                var parts = input.Split(' ');
-                if (parts.Length == 3)
+                var parts = input.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length >= 3)
                 {
-                    await Protocol.SendMessageAsync(stream, $"REGISTER:{parts[1]}:{parts[2]}");
+                    var user = parts[1];
+                    
+                    var pass = string.Join(' ', parts.Skip(2));
+                    await Protocol.SendMessageAsync(stream, $"REGISTER:{user}:{pass}");
+                }
+                else
+                {
+                    Console.WriteLine("<<< SERVER: Usage: /register <username> <password>");
                 }
                 continue;
             }
 
-            if (input.StartsWith("/login "))
+           
+            if (input.StartsWith("/login ", StringComparison.OrdinalIgnoreCase))
             {
-                var parts = input.Split(' ');
-                if (parts.Length == 3)
+                var parts = input.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length >= 3)
                 {
-                    await Protocol.SendMessageAsync(stream, $"LOGIN:{parts[1]}:{parts[2]}");
+                    var user = parts[1];
+                    var pass = string.Join(' ', parts.Skip(2));
+                    await Protocol.SendMessageAsync(stream, $"LOGIN:{user}:{pass}");
+                }
+                else
+                {
+                    Console.WriteLine("<<< SERVER: Usage: /login <username> <password>");
                 }
                 continue;
             }
