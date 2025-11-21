@@ -8,6 +8,7 @@ using ChatServer.Data;
 class Program
 {
     private static readonly ConcurrentDictionary<TcpClient, NetworkStream> Clients = new();
+    private static readonly ConcurrentDictionary<string, TcpClient> UserClients = new();
 
     static async Task Main()
     {
