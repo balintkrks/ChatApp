@@ -15,18 +15,51 @@ class Program
         if (string.IsNullOrEmpty(username)) username = "Anon";
         await Protocol.SendMessageAsync(stream, $"USERNAME:{username}");
 
-        
+
         _ = Task.Run(async () =>
         {
             while (true)
             {
                 var msg = await Protocol.ReceiveMessageAsync(stream);
                 if (msg == null) break;
+
+                if (msg.StartsWith("FILE:"))
+                {
+                    var parts = msg.Split(':', 4);
+                    if (parts.Length == 4)
+                    {
+                        var sender = parts[1];
+                        var fileName = parts[2];
+                        var fileSize = int.Parse(parts[3]);
+
+                        Console.WriteLine($"<<< Fájl érkezik {sender}-től: {fileName} ({fileSize} byte)");
+
+                        var fileBytes = await Protocol.ReceiveBytesAsync(stream);
+                        if (fileBytes != null && fileBytes.Length == fileSize)
+                        {
+                            var savePath = Path.Combine(Environment.CurrentDirectory, "Downloads", fileName);
+                            Directory.CreateDirectory(Path.GetDirectoryName(savePath)!);
+                            await File.WriteAllBytesAsync(savePath, fileBytes);
+
+                            Console.WriteLine($"<<< Fájl mentve ide: {savePath}");
+                        }
+                        else
+                        {
+                            Console.WriteLine("<<< SERVER: File transfer failed");
+                        }
+                        var endMsg = await Protocol.ReceiveMessageAsync(stream);
+                        if (endMsg == "FILE_END")
+                        {
+                            Console.WriteLine("<<< Fájl átvitel befejezve");
+                        }
+                    }
+                    continue;
+                }
                 Console.WriteLine($"<<< {msg}");
             }
         });
 
-        
+
         while (true)
         {
             string? input = Console.ReadLine();
