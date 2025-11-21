@@ -120,11 +120,64 @@ class Program
                         }
                         else
                         {
-                            await Protocol.SendMessageAsync(stream, $"SERVER: User {recipient} not found");
+                            await Protocol.SendMessageAsync(stream, $"SERVER: {recipient} not found");
                         }
                     }
                     continue;
 
+                }
+
+                if (msg.StartsWith("FILE:"))
+                {
+                    var parts = msg.Split(':', 4);
+                    if (parts.Length == 4)
+                    {
+                        var recipient = parts[1]; 
+                        var fileName = parts[2];
+                        var fileSize = int.Parse(parts[3]);
+                        var fileBytes = await Protocol.ReceiveBytesAsync(stream);
+
+                        if (fileBytes == null || fileBytes.Length != fileSize)
+                        {
+                            await Protocol.SendMessageAsync(stream, "SERVER: Fájl küldés sikertelen!");
+                            continue;
+                        }
+
+                        Console.WriteLine($"Fájl érkezett {username}-től: {fileName} ({fileBytes.Length} byte)");
+
+                        if (!string.IsNullOrEmpty(recipient))
+                        {
+                            if (UserClients.TryGetValue(recipient, out var recipientClient))
+                            {
+                                var recipientStream = recipientClient.GetStream();
+                                await Protocol.SendMessageAsync(recipientStream, $"FILE:{username}:{fileName}:{fileBytes.Length}");
+                                await Protocol.SendBytesAsync(recipientStream, fileBytes);
+                                await Protocol.SendMessageAsync(recipientStream, "FILE_END");
+                            }
+                            else
+                            {
+                                await Protocol.SendMessageAsync(stream, $"SERVER: {recipient} nem található");
+                            }
+                        }
+                        else
+                        {
+                            foreach (var kv in Clients)
+                            {
+                                try
+                                {
+                                    await Protocol.SendMessageAsync(kv.Value, $"FILE:{username}:{fileName}:{fileBytes.Length}");
+                                    await Protocol.SendBytesAsync(kv.Value, fileBytes);
+                                    await Protocol.SendMessageAsync(kv.Value, "FILE_END");
+                                }
+                                catch
+                                {
+                                    Clients.TryRemove(kv.Key, out _);
+                                    kv.Key.Close();
+                                }
+                            }
+                        }
+                    }
+                    continue;
                 }
 
 
