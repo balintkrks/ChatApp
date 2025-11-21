@@ -41,5 +41,11 @@ namespace ChatCommon
 
             return Encoding.UTF8.GetString(buf);
         }
+        public static async Task SendBytesAsync(Stream stream, byte[] data)
+        {
+            var len = BitConverter.GetBytes(data.Length);
+            await stream.WriteAsync(len, 0, len.Length);
+            await stream.WriteAsync(data, 0, data.Length);
+        }
     }
 }
