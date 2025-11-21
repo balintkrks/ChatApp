@@ -46,6 +46,7 @@ class Program
                 {
                     username = msg.Substring("USERNAME:".Length).Trim();
                     if (string.IsNullOrEmpty(username)) username = "Anon";
+                    UserClients[username] = client;
                     await Protocol.SendMessageAsync(stream, $"SERVER: Username set to {username}");
                     continue;
                 }
@@ -105,7 +106,27 @@ class Program
                     continue;
                 }
 
-                
+                if (msg.StartsWith("PRIVATE:"))
+                {
+                    var parts = msg.Split(':', 3);
+                    if (parts.Length == 3)
+                    {
+                        var recipient = parts[1];
+                        var message = parts[2];
+                        if (UserClients.TryGetValue(recipient, out var recipientClient))
+                        {
+                            var recipientStream = recipientClient.GetStream();
+                            await Protocol.SendMessageAsync(recipientStream, $"(privát) {username}: {message}");
+                        }
+                        else
+                        {
+                            await Protocol.SendMessageAsync(stream, $"SERVER: User {recipient} not found");
+                        }
+                    }
+                    continue;
+                }
+
+
                 Database.AddMessage(username, msg);
                 string broadcast = $"{username}: {msg}";
                 Console.WriteLine(broadcast);
@@ -131,6 +152,7 @@ class Program
         finally
         {
             Clients.TryRemove(client, out _);
+            UserClients.TryRemove(username, out _);
             client.Close();
             Console.WriteLine("Kliens bontotta.");
         }
