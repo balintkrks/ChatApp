@@ -70,7 +70,22 @@ class Program
                 continue;
             }
 
-            
+            if (input.StartsWith("/msg ", StringComparison.OrdinalIgnoreCase))
+            {
+                var parts = input.Split(' ', 3, StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length >= 3)
+                {
+                    var recipient = parts[1];
+                    var message = parts[2];
+                    await Protocol.SendMessageAsync(stream, $"PRIVATE:{recipient}:{message}");
+                }
+                else
+                {
+                    Console.WriteLine("<<< SERVER: Usage: /msg <recipient> <message>");
+                }
+                continue;
+            }
+
             await Protocol.SendMessageAsync(stream, input);
         }
 
