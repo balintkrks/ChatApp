@@ -86,6 +86,26 @@ class Program
                 continue;
             }
 
+            if (input.StartsWith("/sendfile ", StringComparison.OrdinalIgnoreCase))
+            {
+                var parts = input.Split(' ', 3);
+                if (parts.Length >= 2 && File.Exists(parts[1]))
+                {
+                    var filePath = parts[1];
+                    var recipient = parts.Length == 3 ? parts[2] : "";
+                    var fileName = Path.GetFileName(filePath);
+                    var fileBytes = await File.ReadAllBytesAsync(filePath);
+
+                    await Protocol.SendMessageAsync(stream, $"FILE:{recipient}:{fileName}:{fileBytes.Length}");
+                    await Protocol.SendBytesAsync(stream, fileBytes);
+                    await Protocol.SendMessageAsync(stream, "FILE_END");
+                }
+                else
+                {
+                    Console.WriteLine("<<< SERVER: Fájl nem található");
+                }
+                continue;
+            }
             await Protocol.SendMessageAsync(stream, input);
         }
 
