@@ -12,7 +12,6 @@ namespace ChatClientGUI.Forms
         private ClientService _service;
         private string _myUsername;
         private string _currentChatPartner = null;
-
         private List<string> _allMessages = new List<string>();
 
         public MainForm(ClientService service, string myName)
@@ -25,32 +24,56 @@ namespace ChatClientGUI.Forms
             _service.MessageReceived += OnMessageReceived;
             _service.ConnectionLost += OnConnectionLost;
             _service.FileReceived += OnFileReceived;
+            _service.UserListReceived += OnUserListReceived;
 
             btnSend.Click += async (s, e) => await SendMessage();
             btnFile.Click += async (s, e) => await SendFile();
+
+            lstUsers.Items.Add("[Közös Chat]");
 
             lstUsers.SelectedIndexChanged += (s, e) =>
             {
                 if (lstUsers.SelectedItem != null)
                 {
-                    _currentChatPartner = lstUsers.SelectedItem.ToString();
-                }
-                else
-                {
-                    _currentChatPartner = null;
+                    string selection = lstUsers.SelectedItem.ToString();
+                    if (selection == "[Közös Chat]")
+                    {
+                        _currentChatPartner = null;
+                        this.Text = $"ChatApp - {_myUsername} (Közös)";
+                    }
+                    else
+                    {
+                        _currentChatPartner = selection;
+                        this.Text = $"ChatApp - {_myUsername} -> {_currentChatPartner}";
+                    }
                 }
                 RefreshChatView();
             };
+        }
 
-            lstUsers.MouseDown += (s, e) =>
+        private void OnUserListReceived(string[] users)
+        {
+            if (IsDisposed) return;
+            Invoke((MethodInvoker)delegate
             {
-                if (e.Button == MouseButtons.Right)
+                var currentSelection = lstUsers.SelectedItem;
+
+                lstUsers.Items.Clear();
+                lstUsers.Items.Add("[Közös Chat]");
+
+                foreach (var user in users)
                 {
-                    lstUsers.ClearSelected();
-                    _currentChatPartner = null;
-                    RefreshChatView();
+                    if (user != _myUsername)
+                    {
+                        lstUsers.Items.Add(user);
+                    }
                 }
-            };
+
+                if (currentSelection != null && lstUsers.Items.Contains(currentSelection))
+                {
+                    lstUsers.SelectedItem = currentSelection;
+                }
+            });
         }
 
         private void RefreshChatView()
@@ -110,7 +133,6 @@ namespace ChatClientGUI.Forms
                 await _service.SendFileAsync(dialog.FileName, recipient);
 
                 string fileName = Path.GetFileName(dialog.FileName);
-
                 if (!string.IsNullOrEmpty(recipient))
                 {
                     _allMessages.Add($"[Privát -> {recipient}] Fájl küldve: {fileName}");
@@ -130,39 +152,6 @@ namespace ChatClientGUI.Forms
             Invoke((MethodInvoker)delegate
             {
                 _allMessages.Add(msg);
-
-                if (msg.Contains(":"))
-                {
-                    string senderCandidate = "";
-                    var parts = msg.Split(':');
-
-                    if (parts.Length >= 2 && int.TryParse(parts[0].Trim(), out _))
-                    {
-                        string temp = msg.Substring(msg.IndexOf(':') + 1).Trim();
-                        if (temp.Contains(":"))
-                        {
-                            string contentWithUser = temp.Substring(temp.IndexOf(' ') + 1);
-                            if (contentWithUser.Contains(":"))
-                            {
-                                senderCandidate = contentWithUser.Split(':')[0].Trim();
-                            }
-                        }
-                    }
-                    else
-                    {
-                        senderCandidate = parts[0].Replace("(privát)", "").Trim();
-                    }
-
-                    if (!string.IsNullOrEmpty(senderCandidate) &&
-                        !senderCandidate.Contains("SERVER") &&
-                        !senderCandidate.Contains("Login") &&
-                        !lstUsers.Items.Contains(senderCandidate) &&
-                        senderCandidate != _myUsername)
-                    {
-                        lstUsers.Items.Add(senderCandidate);
-                    }
-                }
-
                 RefreshChatView();
             });
         }

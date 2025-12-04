@@ -15,6 +15,7 @@ namespace ChatClientGUI.Services
         public event Action<string> MessageReceived;
         public event Action ConnectionLost;
         public event Action<string, byte[]> FileReceived;
+        public event Action<string[]> UserListReceived;
 
         public async Task<bool> ConnectAsync(string ip, int port)
         {
@@ -86,6 +87,14 @@ namespace ChatClientGUI.Services
                 {
                     string msg = await Protocol.ReceiveMessageAsync(_stream);
                     if (msg == null) break;
+
+                    if (msg.StartsWith("USERS:"))
+                    {
+                        string data = msg.Substring(6);
+                        string[] users = data.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                        UserListReceived?.Invoke(users);
+                        continue;
+                    }
 
                     if (msg.StartsWith("FILE:"))
                     {
