@@ -109,8 +109,17 @@ namespace ChatClientGUI.Forms
                 string recipient = _currentChatPartner ?? "";
                 await _service.SendFileAsync(dialog.FileName, recipient);
 
-                string targetName = string.IsNullOrEmpty(recipient) ? "Mindenki" : recipient;
-                _allMessages.Add($"[Fájl küldve -> {targetName}]: {Path.GetFileName(dialog.FileName)}");
+                string fileName = Path.GetFileName(dialog.FileName);
+
+                if (!string.IsNullOrEmpty(recipient))
+                {
+                    _allMessages.Add($"[Privát -> {recipient}] Fájl küldve: {fileName}");
+                }
+                else
+                {
+                    _allMessages.Add($"[Fájl küldve -> Mindenki]: {fileName}");
+                }
+
                 RefreshChatView();
             }
         }
