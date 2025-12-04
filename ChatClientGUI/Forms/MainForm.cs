@@ -61,13 +61,30 @@ namespace ChatClientGUI.Forms
                     if (_pendingFiles.ContainsKey(selectedText))
                     {
                         var fileData = _pendingFiles[selectedText];
-                        SaveFileToDisk(fileData.FileName, fileData.Content);
 
-                        _pendingFiles.Remove(selectedText);
+                        var result = MessageBox.Show(
+                            $"Szeretnéd lementeni a fájlt?\n\nFájlnév: {fileData.FileName}\nMéret: {fileData.Content.Length} bájt",
+                            "Fájl Letöltése",
+                            MessageBoxButtons.YesNo,
+                            MessageBoxIcon.Question);
 
-                        int index = lstMessages.SelectedIndex;
-                        _allMessages[index] = _allMessages[index].Replace("(Dupla kattintás a mentéshez)", "[MENTVE]");
-                        RefreshChatView();
+                        if (result == DialogResult.Yes)
+                        {
+                            SaveFileToDisk(fileData.FileName, fileData.Content);
+
+                            string newText = selectedText.Replace(">>> KATTINTS A MENTÉSHEZ <<<", "[LEMENTVE]");
+
+                            int index = _allMessages.IndexOf(selectedText);
+                            if (index != -1)
+                            {
+                                _allMessages[index] = newText;
+                            }
+
+                            _pendingFiles.Remove(selectedText);
+                            _pendingFiles[newText] = fileData;
+
+                            RefreshChatView();
+                        }
                     }
                 }
             };
@@ -79,7 +96,6 @@ namespace ChatClientGUI.Forms
             Invoke((MethodInvoker)delegate
             {
                 var currentSelection = lstUsers.SelectedItem;
-
                 lstUsers.Items.Clear();
                 lstUsers.Items.Add("[Közös Chat]");
 
@@ -134,8 +150,7 @@ namespace ChatClientGUI.Forms
             if (_currentChatPartner != null)
             {
                 await _service.SendPrivateMessageAsync(_currentChatPartner, text);
-                string myLog = $"[Privát -> {_currentChatPartner}]: {text}";
-                _allMessages.Add(myLog);
+                _allMessages.Add($"[Privát -> {_currentChatPartner}]: {text}");
             }
             else
             {
@@ -151,19 +166,27 @@ namespace ChatClientGUI.Forms
             using var dialog = new OpenFileDialog();
             if (dialog.ShowDialog() == DialogResult.OK)
             {
+                string filePath = dialog.FileName;
+                string fileName = Path.GetFileName(filePath);
+                byte[] fileBytes = await File.ReadAllBytesAsync(filePath);
                 string recipient = _currentChatPartner ?? "";
-                await _service.SendFileAsync(dialog.FileName, recipient);
 
-                string fileName = Path.GetFileName(dialog.FileName);
+                await _service.SendFileAsync(filePath, recipient);
+
+                string displayMsg;
                 if (!string.IsNullOrEmpty(recipient))
                 {
-                    _allMessages.Add($"[Privát -> {recipient}] Fájl küldve: {fileName}");
+                    displayMsg = $"█▓▒░ [Privát -> {recipient}] KÜLDÖTT FÁJL: {fileName} ({fileBytes.Length} byte) >>> KATTINTS A MENTÉSHEZ <<< ░▒▓█";
                 }
                 else
                 {
-                    _allMessages.Add($"[Fájl küldve -> Mindenki]: {fileName}");
+                    displayMsg = $"█▓▒░ [KÖZÖS] KÜLDÖTT FÁJL: {fileName} ({fileBytes.Length} byte) >>> KATTINTS A MENTÉSHEZ <<< ░▒▓█";
                 }
 
+                if (_pendingFiles.ContainsKey(displayMsg)) displayMsg += $" [{DateTime.Now.Ticks}]";
+                _pendingFiles[displayMsg] = (fileName, fileBytes);
+
+                _allMessages.Add(displayMsg);
                 RefreshChatView();
             }
         }
@@ -183,12 +206,10 @@ namespace ChatClientGUI.Forms
             if (IsDisposed) return;
             Invoke((MethodInvoker)delegate
             {
-                string displayMsg = $"📁 FÁJL ÉRKEZETT: {fileName} ({content.Length} byte) - (Dupla kattintás a mentéshez)";
+                string displayMsg = $"█▓▒░ BEJÖVŐ FÁJL: {fileName} ({content.Length} byte) >>> KATTINTS A MENTÉSHEZ <<< ░▒▓█";
 
-                if (_pendingFiles.ContainsKey(displayMsg))
-                {
-                    displayMsg += $" [{DateTime.Now.Ticks}]";
-                }
+                if (_pendingFiles.ContainsKey(displayMsg)) displayMsg += $" [{DateTime.Now.Ticks}]";
+
                 _pendingFiles[displayMsg] = (fileName, content);
 
                 _allMessages.Add(displayMsg);
@@ -214,11 +235,11 @@ namespace ChatClientGUI.Forms
                 }
 
                 File.WriteAllBytes(fullPath, content);
-                MessageBox.Show($"Fájl sikeresen mentve ide:\n{fullPath}", "Mentés kész", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show($"Sikeres mentés!\nHely: {fullPath}", "Kész", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Hiba a mentés során: {ex.Message}", "Hiba", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Hiba: {ex.Message}", "Hiba", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
