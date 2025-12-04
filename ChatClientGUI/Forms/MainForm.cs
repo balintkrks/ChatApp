@@ -13,6 +13,7 @@ namespace ChatClientGUI.Forms
         private string _myUsername;
         private string _currentChatPartner = null;
         private List<string> _allMessages = new List<string>();
+        private Dictionary<string, (string FileName, byte[] Content)> _pendingFiles = new Dictionary<string, (string, byte[])>();
 
         public MainForm(ClientService service, string myName)
         {
@@ -28,10 +29,7 @@ namespace ChatClientGUI.Forms
 
             btnSend.Click += async (s, e) => await SendMessage();
             btnFile.Click += async (s, e) => await SendFile();
-            btnExit.Click += (s, e) =>
-            {
-                Application.Exit();
-            };
+            btnExit.Click += (s, e) => Application.Exit();
 
             lstUsers.Items.Add("[Közös Chat]");
 
@@ -52,6 +50,26 @@ namespace ChatClientGUI.Forms
                     }
                 }
                 RefreshChatView();
+            };
+
+            lstMessages.DoubleClick += (s, e) =>
+            {
+                if (lstMessages.SelectedItem != null)
+                {
+                    string selectedText = lstMessages.SelectedItem.ToString();
+
+                    if (_pendingFiles.ContainsKey(selectedText))
+                    {
+                        var fileData = _pendingFiles[selectedText];
+                        SaveFileToDisk(fileData.FileName, fileData.Content);
+
+                        _pendingFiles.Remove(selectedText);
+
+                        int index = lstMessages.SelectedIndex;
+                        _allMessages[index] = _allMessages[index].Replace("(Dupla kattintás a mentéshez)", "[MENTVE]");
+                        RefreshChatView();
+                    }
+                }
             };
         }
 
@@ -165,35 +183,43 @@ namespace ChatClientGUI.Forms
             if (IsDisposed) return;
             Invoke((MethodInvoker)delegate
             {
-                try
+                string displayMsg = $"📁 FÁJL ÉRKEZETT: {fileName} ({content.Length} byte) - (Dupla kattintás a mentéshez)";
+
+                if (_pendingFiles.ContainsKey(displayMsg))
                 {
-                    
-                    string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
-                    Directory.CreateDirectory(folder);
-                    string fullPath = Path.Combine(folder, fileName);
-
-                    int count = 1;
-                    string nameOnly = Path.GetFileNameWithoutExtension(fileName);
-                    string ext = Path.GetExtension(fileName);
-                    while (File.Exists(fullPath))
-                    {
-                        fullPath = Path.Combine(folder, $"{nameOnly}_{count}{ext}");
-                        count++;
-                    }
-
-                    File.WriteAllBytes(fullPath, content);
-
-                    
-                    string logMsg = $"*** FÁJL MENTVE: {fullPath}";
-                    _allMessages.Add(logMsg);
-                    RefreshChatView();
+                    displayMsg += $" [{DateTime.Now.Ticks}]";
                 }
-                catch (Exception ex)
-                {
-                    _allMessages.Add($"[HIBA]: Fájl mentés sikertelen: {ex.Message}");
-                    RefreshChatView();
-                }
+                _pendingFiles[displayMsg] = (fileName, content);
+
+                _allMessages.Add(displayMsg);
+                RefreshChatView();
             });
+        }
+
+        private void SaveFileToDisk(string fileName, byte[] content)
+        {
+            try
+            {
+                string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+                Directory.CreateDirectory(folder);
+                string fullPath = Path.Combine(folder, fileName);
+
+                int count = 1;
+                string nameOnly = Path.GetFileNameWithoutExtension(fileName);
+                string ext = Path.GetExtension(fileName);
+                while (File.Exists(fullPath))
+                {
+                    fullPath = Path.Combine(folder, $"{nameOnly}_{count}{ext}");
+                    count++;
+                }
+
+                File.WriteAllBytes(fullPath, content);
+                MessageBox.Show($"Fájl sikeresen mentve ide:\n{fullPath}", "Mentés kész", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Hiba a mentés során: {ex.Message}", "Hiba", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void OnConnectionLost()
