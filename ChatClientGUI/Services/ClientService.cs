@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using ChatCommon;
@@ -13,6 +14,7 @@ namespace ChatClientGUI.Services
 
         public event Action<string> MessageReceived;
         public event Action ConnectionLost;
+        public event Action<string, byte[]> FileReceived;
 
         public async Task<bool> ConnectAsync(string ip, int port)
         {
@@ -52,6 +54,20 @@ namespace ChatClientGUI.Services
             await Protocol.SendMessageAsync(_stream, message);
         }
 
+        public async Task SendFileAsync(string filePath, string recipient = "")
+        {
+            if (!_isConnected) return;
+
+            var fileName = Path.GetFileName(filePath);
+            var fileBytes = await File.ReadAllBytesAsync(filePath);
+
+            await Protocol.SendMessageAsync(_stream, $"FILE:{recipient}:{fileName}:{fileBytes.Length}");
+
+            await Protocol.SendBytesAsync(_stream, fileBytes);
+
+            await Protocol.SendMessageAsync(_stream, "FILE_END");
+        }
+
         private async Task ReceiveLoop()
         {
             try
@@ -60,6 +76,27 @@ namespace ChatClientGUI.Services
                 {
                     string msg = await Protocol.ReceiveMessageAsync(_stream);
                     if (msg == null) break;
+
+                    if (msg.StartsWith("FILE:"))
+                    {
+                        var parts = msg.Split(':', 4);
+                        if (parts.Length == 4)
+                        {
+                            var sender = parts[1];
+                            var fileName = parts[2];
+                            var fileSize = int.Parse(parts[3]);
+
+                            var fileBytes = await Protocol.ReceiveBytesAsync(_stream);
+
+                            await Protocol.ReceiveMessageAsync(_stream);
+
+                            if (fileBytes != null)
+                            {
+                                FileReceived?.Invoke(fileName, fileBytes);
+                            }
+                        }
+                        continue; 
+                    }
 
                     MessageReceived?.Invoke(msg);
                 }
