@@ -28,6 +28,10 @@ namespace ChatClientGUI.Forms
 
             btnSend.Click += async (s, e) => await SendMessage();
             btnFile.Click += async (s, e) => await SendFile();
+            btnExit.Click += (s, e) =>
+            {
+                Application.Exit();
+            };
 
             lstUsers.Items.Add("[Közös Chat]");
 
@@ -163,6 +167,7 @@ namespace ChatClientGUI.Forms
             {
                 try
                 {
+                    
                     string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
                     Directory.CreateDirectory(folder);
                     string fullPath = Path.Combine(folder, fileName);
@@ -178,11 +183,16 @@ namespace ChatClientGUI.Forms
 
                     File.WriteAllBytes(fullPath, content);
 
-                    string logMsg = $"[RENDSZER]: Fájl érkezett és mentve: {Path.GetFileName(fullPath)}";
+                    
+                    string logMsg = $"*** FÁJL MENTVE: {fullPath}";
                     _allMessages.Add(logMsg);
                     RefreshChatView();
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    _allMessages.Add($"[HIBA]: Fájl mentés sikertelen: {ex.Message}");
+                    RefreshChatView();
+                }
             });
         }
 

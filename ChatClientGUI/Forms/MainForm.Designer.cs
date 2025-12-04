@@ -34,6 +34,7 @@
             btnFile = new Button();
             label1 = new Label();
             lstUsers = new ListBox();
+            btnExit = new Button();
             SuspendLayout();
             // 
             // lstMessages
@@ -88,11 +89,21 @@
             lstUsers.Size = new Size(120, 94);
             lstUsers.TabIndex = 5;
             // 
+            // btnExit
+            // 
+            btnExit.Location = new Point(418, 202);
+            btnExit.Name = "btnExit";
+            btnExit.Size = new Size(75, 23);
+            btnExit.TabIndex = 6;
+            btnExit.Text = "Kilépés";
+            btnExit.UseVisualStyleBackColor = true;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(btnExit);
             Controls.Add(lstUsers);
             Controls.Add(label1);
             Controls.Add(btnFile);
@@ -113,5 +124,6 @@
         private Button btnFile;
         private Label label1;
         private ListBox lstUsers;
+        private Button btnExit;
     }
 }
