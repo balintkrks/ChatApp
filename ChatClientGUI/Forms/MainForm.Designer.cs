@@ -31,6 +31,7 @@
             lstMessages = new ListBox();
             txtMessage = new TextBox();
             btnSend = new Button();
+            btnFile = new Button();
             SuspendLayout();
             // 
             // lstMessages
@@ -55,14 +56,24 @@
             btnSend.Name = "btnSend";
             btnSend.Size = new Size(75, 23);
             btnSend.TabIndex = 2;
-            btnSend.Text = "button1";
+            btnSend.Text = "Küldés";
             btnSend.UseVisualStyleBackColor = true;
+            // 
+            // btnFile
+            // 
+            btnFile.Location = new Point(325, 202);
+            btnFile.Name = "btnFile";
+            btnFile.Size = new Size(75, 23);
+            btnFile.TabIndex = 3;
+            btnFile.Text = "Fájl küldés";
+            btnFile.UseVisualStyleBackColor = true;
             // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(btnFile);
             Controls.Add(btnSend);
             Controls.Add(txtMessage);
             Controls.Add(lstMessages);
@@ -77,5 +88,6 @@
         private ListBox lstMessages;
         private TextBox txtMessage;
         private Button btnSend;
+        private Button btnFile;
     }
 }
