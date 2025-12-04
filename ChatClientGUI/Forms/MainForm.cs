@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -9,11 +10,17 @@ namespace ChatClientGUI.Forms
     public partial class MainForm : Form
     {
         private ClientService _service;
+        private string _myUsername;
+        private string _currentChatPartner = null;
 
-        public MainForm(ClientService service)
+        private List<string> _allMessages = new List<string>();
+
+        public MainForm(ClientService service, string myName)
         {
             InitializeComponent();
             _service = service;
+            _myUsername = string.IsNullOrEmpty(myName) ? "Én" : myName;
+            this.Text = $"ChatApp - {_myUsername}";
 
             _service.MessageReceived += OnMessageReceived;
             _service.ConnectionLost += OnConnectionLost;
@@ -22,24 +29,76 @@ namespace ChatClientGUI.Forms
             btnSend.Click += async (s, e) => await SendMessage();
             btnFile.Click += async (s, e) => await SendFile();
 
-            lstUsers.DoubleClick += (s, e) => OpenPrivateChat();
+            lstUsers.SelectedIndexChanged += (s, e) =>
+            {
+                if (lstUsers.SelectedItem != null)
+                {
+                    _currentChatPartner = lstUsers.SelectedItem.ToString();
+                }
+                else
+                {
+                    _currentChatPartner = null;
+                }
+                RefreshChatView();
+            };
+
+            lstUsers.MouseDown += (s, e) =>
+            {
+                if (e.Button == MouseButtons.Right)
+                {
+                    lstUsers.ClearSelected();
+                    _currentChatPartner = null;
+                    RefreshChatView();
+                }
+            };
         }
 
-        private void OpenPrivateChat()
+        private void RefreshChatView()
         {
-            if (lstUsers.SelectedItem == null) return;
+            lstMessages.Items.Clear();
 
-            string targetUser = lstUsers.SelectedItem.ToString();
+            foreach (var msg in _allMessages)
+            {
+                if (_currentChatPartner == null)
+                {
+                    if (!msg.Contains("(privát)") && !msg.Contains("[Privát ->"))
+                    {
+                        lstMessages.Items.Add(msg);
+                    }
+                }
+                else
+                {
+                    bool fromPartner = msg.Contains($"(privát) {_currentChatPartner}:");
+                    bool toPartner = msg.Contains($"[Privát -> {_currentChatPartner}]");
 
-            var privateForm = new PrivateChatForm(_service, targetUser);
-            privateForm.Show();
+                    if (fromPartner || toPartner)
+                    {
+                        lstMessages.Items.Add(msg);
+                    }
+                }
+            }
+            if (lstMessages.Items.Count > 0)
+                lstMessages.TopIndex = lstMessages.Items.Count - 1;
         }
 
         private async Task SendMessage()
         {
             if (string.IsNullOrWhiteSpace(txtMessage.Text)) return;
-            await _service.SendMessageAsync(txtMessage.Text);
+            string text = txtMessage.Text;
+
+            if (_currentChatPartner != null)
+            {
+                await _service.SendPrivateMessageAsync(_currentChatPartner, text);
+                string myLog = $"[Privát -> {_currentChatPartner}]: {text}";
+                _allMessages.Add(myLog);
+            }
+            else
+            {
+                await _service.SendMessageAsync(text);
+            }
+
             txtMessage.Clear();
+            RefreshChatView();
         }
 
         private async Task SendFile()
@@ -47,7 +106,12 @@ namespace ChatClientGUI.Forms
             using var dialog = new OpenFileDialog();
             if (dialog.ShowDialog() == DialogResult.OK)
             {
-                await _service.SendFileAsync(dialog.FileName, "");
+                string recipient = _currentChatPartner ?? "";
+                await _service.SendFileAsync(dialog.FileName, recipient);
+
+                string targetName = string.IsNullOrEmpty(recipient) ? "Mindenki" : recipient;
+                _allMessages.Add($"[Fájl küldve -> {targetName}]: {Path.GetFileName(dialog.FileName)}");
+                RefreshChatView();
             }
         }
 
@@ -56,21 +120,41 @@ namespace ChatClientGUI.Forms
             if (IsDisposed) return;
             Invoke((MethodInvoker)delegate
             {
-                if (msg.StartsWith("(privát)")) return;
-
-                lstMessages.Items.Add(msg);
-                lstMessages.TopIndex = lstMessages.Items.Count - 1;
+                _allMessages.Add(msg);
 
                 if (msg.Contains(":"))
                 {
-                    var parts = msg.Split(':', 2);
-                    string sender = parts[0].Trim();
+                    string senderCandidate = "";
+                    var parts = msg.Split(':');
 
-                    if (!sender.Contains("SERVER") && !lstUsers.Items.Contains(sender))
+                    if (parts.Length >= 2 && int.TryParse(parts[0].Trim(), out _))
                     {
-                        lstUsers.Items.Add(sender);
+                        string temp = msg.Substring(msg.IndexOf(':') + 1).Trim();
+                        if (temp.Contains(":"))
+                        {
+                            string contentWithUser = temp.Substring(temp.IndexOf(' ') + 1);
+                            if (contentWithUser.Contains(":"))
+                            {
+                                senderCandidate = contentWithUser.Split(':')[0].Trim();
+                            }
+                        }
+                    }
+                    else
+                    {
+                        senderCandidate = parts[0].Replace("(privát)", "").Trim();
+                    }
+
+                    if (!string.IsNullOrEmpty(senderCandidate) &&
+                        !senderCandidate.Contains("SERVER") &&
+                        !senderCandidate.Contains("Login") &&
+                        !lstUsers.Items.Contains(senderCandidate) &&
+                        senderCandidate != _myUsername)
+                    {
+                        lstUsers.Items.Add(senderCandidate);
                     }
                 }
+
+                RefreshChatView();
             });
         }
 
@@ -79,18 +163,28 @@ namespace ChatClientGUI.Forms
             if (IsDisposed) return;
             Invoke((MethodInvoker)delegate
             {
-                var result = MessageBox.Show($"Fájl érkezett a közösben: {fileName}\nSzeretnéd menteni?", "Fájl letöltés", MessageBoxButtons.YesNo);
-
-                if (result == DialogResult.Yes)
+                try
                 {
-                    using var dialog = new SaveFileDialog();
-                    dialog.FileName = fileName;
-                    if (dialog.ShowDialog() == DialogResult.OK)
+                    string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+                    Directory.CreateDirectory(folder);
+                    string fullPath = Path.Combine(folder, fileName);
+
+                    int count = 1;
+                    string nameOnly = Path.GetFileNameWithoutExtension(fileName);
+                    string ext = Path.GetExtension(fileName);
+                    while (File.Exists(fullPath))
                     {
-                        File.WriteAllBytes(dialog.FileName, content);
-                        MessageBox.Show("Mentve!");
+                        fullPath = Path.Combine(folder, $"{nameOnly}_{count}{ext}");
+                        count++;
                     }
+
+                    File.WriteAllBytes(fullPath, content);
+
+                    string logMsg = $"[RENDSZER]: Fájl érkezett és mentve: {Path.GetFileName(fullPath)}";
+                    _allMessages.Add(logMsg);
+                    RefreshChatView();
                 }
+                catch { }
             });
         }
 
@@ -99,7 +193,7 @@ namespace ChatClientGUI.Forms
             if (IsDisposed) return;
             Invoke((MethodInvoker)delegate
             {
-                MessageBox.Show("Megszakadt a kapcsolat a szerverrel.");
+                MessageBox.Show("Kapcsolat megszakadt.");
                 Application.Exit();
             });
         }
