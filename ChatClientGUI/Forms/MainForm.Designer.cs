@@ -32,6 +32,8 @@
             txtMessage = new TextBox();
             btnSend = new Button();
             btnFile = new Button();
+            label1 = new Label();
+            lstUsers = new ListBox();
             SuspendLayout();
             // 
             // lstMessages
@@ -68,11 +70,31 @@
             btnFile.Text = "Fájl küldés";
             btnFile.UseVisualStyleBackColor = true;
             // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Location = new Point(460, 48);
+            label1.Name = "label1";
+            label1.Size = new Size(118, 15);
+            label1.TabIndex = 4;
+            label1.Text = "Elérhető felhasználók";
+            // 
+            // lstUsers
+            // 
+            lstUsers.FormattingEnabled = true;
+            lstUsers.ItemHeight = 15;
+            lstUsers.Location = new Point(460, 82);
+            lstUsers.Name = "lstUsers";
+            lstUsers.Size = new Size(120, 94);
+            lstUsers.TabIndex = 5;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(lstUsers);
+            Controls.Add(label1);
             Controls.Add(btnFile);
             Controls.Add(btnSend);
             Controls.Add(txtMessage);
@@ -89,5 +111,7 @@
         private TextBox txtMessage;
         private Button btnSend;
         private Button btnFile;
+        private Label label1;
+        private ListBox lstUsers;
     }
 }

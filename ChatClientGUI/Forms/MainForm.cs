@@ -14,12 +14,25 @@ namespace ChatClientGUI.Forms
         {
             InitializeComponent();
             _service = service;
+
             _service.MessageReceived += OnMessageReceived;
             _service.ConnectionLost += OnConnectionLost;
             _service.FileReceived += OnFileReceived;
 
             btnSend.Click += async (s, e) => await SendMessage();
             btnFile.Click += async (s, e) => await SendFile();
+
+            lstUsers.DoubleClick += (s, e) => OpenPrivateChat();
+        }
+
+        private void OpenPrivateChat()
+        {
+            if (lstUsers.SelectedItem == null) return;
+
+            string targetUser = lstUsers.SelectedItem.ToString();
+
+            var privateForm = new PrivateChatForm(_service, targetUser);
+            privateForm.Show();
         }
 
         private async Task SendMessage()
@@ -34,7 +47,7 @@ namespace ChatClientGUI.Forms
             using var dialog = new OpenFileDialog();
             if (dialog.ShowDialog() == DialogResult.OK)
             {
-                await _service.SendFileAsync(dialog.FileName);
+                await _service.SendFileAsync(dialog.FileName, "");
             }
         }
 
@@ -43,8 +56,21 @@ namespace ChatClientGUI.Forms
             if (IsDisposed) return;
             Invoke((MethodInvoker)delegate
             {
+                if (msg.StartsWith("(privát)")) return;
+
                 lstMessages.Items.Add(msg);
                 lstMessages.TopIndex = lstMessages.Items.Count - 1;
+
+                if (msg.Contains(":"))
+                {
+                    var parts = msg.Split(':', 2);
+                    string sender = parts[0].Trim();
+
+                    if (!sender.Contains("SERVER") && !lstUsers.Items.Contains(sender))
+                    {
+                        lstUsers.Items.Add(sender);
+                    }
+                }
             });
         }
 
@@ -53,7 +79,7 @@ namespace ChatClientGUI.Forms
             if (IsDisposed) return;
             Invoke((MethodInvoker)delegate
             {
-                var result = MessageBox.Show($"Fájl érkezett: {fileName}. Szeretnéd menteni?", "Fájlátvitel", MessageBoxButtons.YesNo);
+                var result = MessageBox.Show($"Fájl érkezett a közösben: {fileName}\nSzeretnéd menteni?", "Fájl letöltés", MessageBoxButtons.YesNo);
 
                 if (result == DialogResult.Yes)
                 {
@@ -62,7 +88,7 @@ namespace ChatClientGUI.Forms
                     if (dialog.ShowDialog() == DialogResult.OK)
                     {
                         File.WriteAllBytes(dialog.FileName, content);
-                        MessageBox.Show("Sikeres mentés.");
+                        MessageBox.Show("Mentve!");
                     }
                 }
             });
@@ -73,7 +99,7 @@ namespace ChatClientGUI.Forms
             if (IsDisposed) return;
             Invoke((MethodInvoker)delegate
             {
-                MessageBox.Show("Kapcsolat megszakadt.");
+                MessageBox.Show("Megszakadt a kapcsolat a szerverrel.");
                 Application.Exit();
             });
         }
