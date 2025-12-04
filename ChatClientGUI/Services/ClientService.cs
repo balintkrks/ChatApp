@@ -42,6 +42,12 @@ namespace ChatClientGUI.Services
             await Protocol.SendMessageAsync(_stream, $"LOGIN:{username}:{password}");
         }
 
+        public async Task SendLoginAnonAsync()
+        {
+            if (!_isConnected) return;
+            await Protocol.SendMessageAsync(_stream, "LOGIN_ANON");
+        }
+
         public async Task SendRegisterAsync(string username, string password)
         {
             if (!_isConnected) return;
@@ -91,7 +97,7 @@ namespace ChatClientGUI.Services
                             var fileSize = int.Parse(parts[3]);
 
                             var fileBytes = await Protocol.ReceiveBytesAsync(_stream);
-                            await Protocol.ReceiveMessageAsync(_stream); // FILE_END várása
+                            await Protocol.ReceiveMessageAsync(_stream);
 
                             if (fileBytes != null)
                             {
