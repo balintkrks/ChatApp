@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Net.Sockets;
 using System.Collections.Concurrent;
+using System.Text;
 using ChatCommon;
 using ChatCommon.Utils;
 using ChatServer.Data;
@@ -13,7 +14,6 @@ class Program
     static async Task Main()
     {
         Database.Init();
-       
         var listener = new TcpListener(IPAddress.Any, 5000);
         listener.Start();
         Console.WriteLine("Szerver fut a 5000-es porton.");
@@ -23,7 +23,6 @@ class Program
             var client = await listener.AcceptTcpClientAsync();
             var stream = client.GetStream();
             Clients[client] = stream;
-       
             _ = HandleClient(client, stream);
         }
     }
@@ -32,6 +31,7 @@ class Program
     {
         Console.WriteLine("Kliens csatlakozott.");
         string username = "Anon";
+        bool isLoggedIn = false;
 
         try
         {
@@ -42,18 +42,17 @@ class Program
                 msg = msg.Trim();
                 if (string.IsNullOrWhiteSpace(msg)) continue;
 
-                
                 if (msg == "LOGIN_ANON")
                 {
                     username = $"Anon_{Guid.NewGuid().ToString().Substring(0, 4)}";
                     UserClients[username] = client;
+                    isLoggedIn = true;
 
                     await Protocol.SendMessageAsync(stream, $"SERVER: Login successful (Anon)");
-                    Console.WriteLine($"{username} belépett (Anonim).");
+                    await BroadcastUserList();
                     continue;
                 }
 
-           
                 if (msg.StartsWith("REGISTER:"))
                 {
                     var parts = msg.Split(':', 3, StringSplitOptions.None);
@@ -64,13 +63,11 @@ class Program
                         string passHash = HashHelper.Sha256(pass);
 
                         bool ok = Database.AddUser(user, passHash);
-                      
                         await Protocol.SendMessageAsync(stream, ok ? "SERVER: Registration successful" : "SERVER: Registration failed");
                     }
                     continue;
                 }
 
-              
                 if (msg.StartsWith("LOGIN:"))
                 {
                     var parts = msg.Split(':', 3, StringSplitOptions.None);
@@ -84,11 +81,12 @@ class Program
                         if (ok)
                         {
                             username = user;
-                            UserClients[username] = client; 
-                            await Protocol.SendMessageAsync(stream, "SERVER: Login successful");
+                            UserClients[username] = client;
+                            isLoggedIn = true;
 
-                           
-                            Console.WriteLine($"{username} belépett. History küldése...");
+                            await Protocol.SendMessageAsync(stream, "SERVER: Login successful");
+                            await BroadcastUserList();
+
                             var history = Database.GetLastMessages(20);
                             foreach (var m in history)
                             {
@@ -103,7 +101,6 @@ class Program
                     continue;
                 }
 
-
                 if (msg.StartsWith("PRIVATE:"))
                 {
                     var parts = msg.Split(':', 3);
@@ -114,37 +111,30 @@ class Program
                         if (UserClients.TryGetValue(recipient, out var recipientClient))
                         {
                             var recipientStream = recipientClient.GetStream();
-                           
                             await Protocol.SendMessageAsync(recipientStream, $"(privát) {username}: {message}");
                         }
                     }
                     continue;
                 }
 
-               
                 if (msg.StartsWith("FILE:"))
                 {
-                    var parts = msg.Split(':', 4); 
+                    var parts = msg.Split(':', 4);
                     if (parts.Length == 4)
                     {
                         var recipient = parts[1];
                         var fileName = parts[2];
                         var fileSize = int.Parse(parts[3]);
-
                         var fileBytes = await Protocol.ReceiveBytesAsync(stream);
                         await Protocol.ReceiveMessageAsync(stream);
 
                         if (fileBytes != null && fileBytes.Length == fileSize)
                         {
-                            Console.WriteLine($"Fájl érkezett {username}-től: {fileName}");
-
                             if (!string.IsNullOrEmpty(recipient))
                             {
-                               
                                 if (UserClients.TryGetValue(recipient, out var recipientClient))
                                 {
                                     var rs = recipientClient.GetStream();
-                                    
                                     await Protocol.SendMessageAsync(rs, $"FILE:{username}:{fileName}:{fileBytes.Length}");
                                     await Protocol.SendBytesAsync(rs, fileBytes);
                                     await Protocol.SendMessageAsync(rs, "FILE_END");
@@ -152,7 +142,6 @@ class Program
                             }
                             else
                             {
-                                
                                 foreach (var kv in Clients)
                                 {
                                     try
@@ -161,7 +150,7 @@ class Program
                                         await Protocol.SendBytesAsync(kv.Value, fileBytes);
                                         await Protocol.SendMessageAsync(kv.Value, "FILE_END");
                                     }
-                                    catch {  }
+                                    catch { }
                                 }
                             }
                         }
@@ -170,7 +159,6 @@ class Program
                 }
 
                 Database.AddMessage(username, msg);
-
                 string broadcast = $"{DateTime.Now:HH:mm} {username}: {msg}";
                 Console.WriteLine(broadcast);
 
@@ -181,19 +169,33 @@ class Program
                 }
             }
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Hiba: {ex.Message}");
         }
         finally
         {
             Clients.TryRemove(client, out _);
-            if (username != "Anon")
+            if (isLoggedIn && !string.IsNullOrEmpty(username))
             {
                 UserClients.TryRemove(username, out _);
+                _ = BroadcastUserList();
             }
             client.Close();
-            Console.WriteLine("Kliens lecsatlakozott.");
+        }
+    }
+
+    static async Task BroadcastUserList()
+    {
+        var users = UserClients.Keys.ToArray();
+        string userListMsg = "USERS:" + string.Join(",", users);
+
+        foreach (var kv in Clients)
+        {
+            try
+            {
+                await Protocol.SendMessageAsync(kv.Value, userListMsg);
+            }
+            catch { }
         }
     }
 }
