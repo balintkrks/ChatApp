@@ -54,6 +54,12 @@ namespace ChatClientGUI.Services
             await Protocol.SendMessageAsync(_stream, message);
         }
 
+        public async Task SendPrivateMessageAsync(string recipient, string message)
+        {
+            if (!_isConnected) return;
+            await Protocol.SendMessageAsync(_stream, $"PRIVATE:{recipient}:{message}");
+        }
+
         public async Task SendFileAsync(string filePath, string recipient = "")
         {
             if (!_isConnected) return;
@@ -62,9 +68,7 @@ namespace ChatClientGUI.Services
             var fileBytes = await File.ReadAllBytesAsync(filePath);
 
             await Protocol.SendMessageAsync(_stream, $"FILE:{recipient}:{fileName}:{fileBytes.Length}");
-
             await Protocol.SendBytesAsync(_stream, fileBytes);
-
             await Protocol.SendMessageAsync(_stream, "FILE_END");
         }
 
@@ -87,7 +91,6 @@ namespace ChatClientGUI.Services
                             var fileSize = int.Parse(parts[3]);
 
                             var fileBytes = await Protocol.ReceiveBytesAsync(_stream);
-
                             await Protocol.ReceiveMessageAsync(_stream);
 
                             if (fileBytes != null)
@@ -95,7 +98,7 @@ namespace ChatClientGUI.Services
                                 FileReceived?.Invoke(fileName, fileBytes);
                             }
                         }
-                        continue; 
+                        continue;
                     }
 
                     MessageReceived?.Invoke(msg);
