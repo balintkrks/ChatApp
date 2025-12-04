@@ -91,7 +91,7 @@ namespace ChatClientGUI.Services
                             var fileSize = int.Parse(parts[3]);
 
                             var fileBytes = await Protocol.ReceiveBytesAsync(_stream);
-                            await Protocol.ReceiveMessageAsync(_stream);
+                            await Protocol.ReceiveMessageAsync(_stream); // FILE_END várása
 
                             if (fileBytes != null)
                             {
