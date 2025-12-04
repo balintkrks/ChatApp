@@ -13,36 +13,48 @@ namespace ChatClientGUI.Forms
         {
             InitializeComponent();
             _service = new ClientService();
-
             _service.MessageReceived += OnMessageReceived;
 
-            btnLogin.Click += async (s, e) => await Login();
-            btnRegister.Click += async (s, e) => await Register();
+            btnLogin.Click += async (s, e) => await HandleLogin();
+            btnRegister.Click += async (s, e) => await HandleRegister();
         }
 
         private async Task ConnectIfNeeded()
         {
-            bool connected = await _service.ConnectAsync("127.0.0.1", 5000);
-            if (!connected)
+            await _service.ConnectAsync("127.0.0.1", 5000);
+        }
+
+        private async Task HandleLogin()
+        {
+            await ConnectIfNeeded();
+
+            string user = txtUsername.Text.Trim();
+            string pass = txtPassword.Text.Trim();
+
+            if (string.IsNullOrEmpty(user) || string.IsNullOrEmpty(pass))
             {
-                MessageBox.Show("Could not connect to server!");
+                await _service.SendLoginAnonAsync();
+            }
+            else
+            {
+                await _service.SendLoginAsync(user, pass);
             }
         }
 
-        private async Task Login()
+        private async Task HandleRegister()
         {
             await ConnectIfNeeded();
-            string user = txtUsername.Text;
-            string pass = txtPassword.Text;
-            await _service.SendLoginAsync(user, pass);
-        }
+            string user = txtUsername.Text.Trim();
+            string pass = txtPassword.Text.Trim();
 
-        private async Task Register()
-        {
-            await ConnectIfNeeded();
-            string user = txtUsername.Text;
-            string pass = txtPassword.Text;
-            await _service.SendRegisterAsync(user, pass);
+            if (!string.IsNullOrEmpty(user) && !string.IsNullOrEmpty(pass))
+            {
+                await _service.SendRegisterAsync(user, pass);
+            }
+            else
+            {
+                MessageBox.Show("A regisztrációhoz meg kell adni felhasználónevet és jelszót.");
+            }
         }
 
         private void OnMessageReceived(string msg)
@@ -51,19 +63,18 @@ namespace ChatClientGUI.Forms
             {
                 if (msg.Contains("Login successful"))
                 {
-                    var mainForm = new MainForm(_service);
+                    string username = msg.Contains("(Anon)") ? "Anon" : txtUsername.Text;
+                    if (string.IsNullOrEmpty(username)) username = "Anon";
+
+                    var mainForm = new MainForm(_service, username);
                     mainForm.Show();
                     this.Hide();
                 }
-                else if (msg.Contains("Login failed"))
-                {
-                    MessageBox.Show("Invalid credentials!");
-                }
                 else if (msg.Contains("Registration successful"))
                 {
-                    MessageBox.Show("Registration successful! Please login.");
+                    MessageBox.Show("Sikeres regisztráció. Most már bejelentkezhetsz.");
                 }
-                else
+                else if (msg.Contains("failed"))
                 {
                     MessageBox.Show(msg);
                 }
