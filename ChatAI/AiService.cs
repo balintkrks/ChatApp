@@ -72,5 +72,41 @@ namespace ChatAI
                 return $"Hiba: {ex.Message}";
             }
         }
+
+        public async Task<bool> IsOffensiveAsync(string userMessage)
+        {
+            if (_apiKey == "SK-KEY-IDE") return false;
+
+            try
+            {
+                using var client = new HttpClient();
+                client.DefaultRequestHeaders.Add("Authorization", $"Bearer {_apiKey}");
+
+                var requestData = new
+                {
+                    model = "gpt-4o-mini",
+                    messages = new[]
+                    {
+                        new { role = "system", content = "Döntsd el a következő üzenetről, hogy sértő, trágár vagy agresszív-e. CSAK annyit válaszolj: IGEN vagy NEM." },
+                        new { role = "user", content = userMessage }
+                    }
+                };
+
+                var json = JsonConvert.SerializeObject(requestData);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await client.PostAsync("https://api.openai.com/v1/chat/completions", content);
+                var responseString = await response.Content.ReadAsStringAsync();
+                dynamic result = JsonConvert.DeserializeObject(responseString);
+
+                string answer = result.choices[0].message.content;
+
+                return answer.ToUpper().Contains("IGEN") || answer.ToUpper().Contains("YES");
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 }
