@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using System.Threading.Tasks;
@@ -12,11 +13,12 @@ namespace ChatAI
         private static TcpClient _client;
         private static NetworkStream _stream;
         private static AiService _ai;
+        private static Dictionary<string, int> _warnings = new Dictionary<string, int>();
 
         static async Task Main(string[] args)
         {
             _ai = new AiService();
-            Console.WriteLine("=== ChatAI Bot ===");
+            Console.WriteLine("=== ChatAI Bot (Auto-Moderator) ===");
             await ConnectAsync();
         }
 
@@ -78,10 +80,28 @@ namespace ChatAI
                         string actualSender = senderInfo;
                         if (senderInfo.Contains(" ")) actualSender = senderInfo.Split(' ').Last();
 
-                        if (_ai.ContainsBadWord(content))
+                        bool isBad = await _ai.IsOffensiveAsync(content);
+
+                        if (isBad)
                         {
-                            Console.WriteLine($"Moderálás: {actualSender}");
-                            await Protocol.SendMessageAsync(_stream, $"Kérlek {actualSender}, ne beszélj csúnyán!");
+                            if (!_warnings.ContainsKey(actualSender)) _warnings[actualSender] = 0;
+                            _warnings[actualSender]++;
+
+                            int count = _warnings[actualSender];
+                            Console.WriteLine($"[MODERÁTOR] {actualSender} szabálysértés ({count}/3).");
+
+                            if (count < 3)
+                            {
+                                await Protocol.SendMessageAsync(_stream, $"FIGYELEM {actualSender}! Sértő beszéd. ({count}/3 figyelmeztetés)");
+                            }
+                            else
+                            {
+                                await Protocol.SendMessageAsync(_stream, $"SAJNÁLOM {actualSender}, 3. figyelmeztetés után kirúgás!");
+                                await Task.Delay(1000);
+                                await Protocol.SendMessageAsync(_stream, $"KICK:{actualSender}");
+
+                                _warnings.Remove(actualSender);
+                            }
                         }
                     }
                 }
