@@ -16,7 +16,7 @@ class Program
         Database.Init();
         var listener = new TcpListener(IPAddress.Any, 5000);
         listener.Start();
-        Console.WriteLine("Szerver fut a 5000-es porton.");
+        Console.WriteLine("Server started on port 5000.");
 
         while (true)
         {
@@ -29,7 +29,7 @@ class Program
 
     static async Task HandleClient(TcpClient client, NetworkStream stream)
     {
-        Console.WriteLine("Kliens csatlakozott.");
+        Console.WriteLine("Client connected.");
         string username = "Anon";
         bool isLoggedIn = false;
 
@@ -96,6 +96,42 @@ class Program
                         else
                         {
                             await Protocol.SendMessageAsync(stream, "SERVER: Login failed");
+                        }
+                    }
+                    continue;
+                }
+
+                if (msg.StartsWith("KICK:"))
+                {
+                    var parts = msg.Split(':', 2);
+                    if (parts.Length == 2)
+                    {
+                        string targetUser = parts[1].Trim();
+
+                        if (username == "ChatBot")
+                        {
+                            if (UserClients.TryGetValue(targetUser, out var targetClient))
+                            {
+                                try
+                                {
+                                    var targetStream = targetClient.GetStream();
+                                    await Protocol.SendMessageAsync(targetStream, "SERVER: You have been kicked by ChatBot.");
+                                }
+                                catch { }
+
+                                targetClient.Close();
+                                UserClients.TryRemove(targetUser, out _);
+                                Clients.TryRemove(targetClient, out _);
+
+                                await BroadcastUserList();
+                                string kickMsg = $"SERVER: {targetUser} has been kicked.";
+                                Console.WriteLine(kickMsg);
+
+                                foreach (var kv in Clients)
+                                {
+                                    try { await Protocol.SendMessageAsync(kv.Value, kickMsg); } catch { }
+                                }
+                            }
                         }
                     }
                     continue;
