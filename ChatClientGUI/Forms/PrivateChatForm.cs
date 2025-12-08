@@ -22,6 +22,7 @@ namespace ChatClientGUI.Forms
 			_service.MessageReceived += OnMessageReceived;
 			btnSendPrivate.Click += async (s, e) => await SendPrivate();
 
+			// Rajzolás bekapcsolása
 			lstPrivateMessages.MeasureItem += LstPrivateMessages_MeasureItem;
 			lstPrivateMessages.DrawItem += LstPrivateMessages_DrawItem;
 
@@ -30,7 +31,7 @@ namespace ChatClientGUI.Forms
 
 		private void LstPrivateMessages_MeasureItem(object sender, MeasureItemEventArgs e)
 		{
-			e.ItemHeight = 35;
+			e.ItemHeight = 35; // Kicsit nagyobbra vettük, hogy szellős legyen
 		}
 
 		private void LstPrivateMessages_DrawItem(object sender, DrawItemEventArgs e)
@@ -44,6 +45,7 @@ namespace ChatClientGUI.Forms
 
 			bool isMe = msg.StartsWith("Me:");
 
+			// Színek (Ugyanaz, mint a főablakon)
 			Color bubbleColor = isMe ? Color.FromArgb(0, 120, 215) : Color.FromArgb(230, 230, 230);
 			Color textColor = isMe ? Color.White : Color.Black;
 
@@ -54,10 +56,17 @@ namespace ChatClientGUI.Forms
 
 			Rectangle bubbleRect;
 			if (isMe)
+			{
+				// Jobbra
 				bubbleRect = new Rectangle(e.Bounds.Right - bubbleWidth - 10, e.Bounds.Top + 3, bubbleWidth, bubbleHeight);
+			}
 			else
+			{
+				// Balra
 				bubbleRect = new Rectangle(e.Bounds.Left + 10, e.Bounds.Top + 3, bubbleWidth, bubbleHeight);
+			}
 
+			// Lekerekített buborék rajzolása
 			using (GraphicsPath path = GetRoundedPath(bubbleRect, 10))
 			using (var brush = new SolidBrush(bubbleColor))
 			{
@@ -69,6 +78,7 @@ namespace ChatClientGUI.Forms
 			e.DrawFocusRectangle();
 		}
 
+		// Segédfüggvény a lekerekítéshez
 		private GraphicsPath GetRoundedPath(Rectangle rect, int radius)
 		{
 			GraphicsPath path = new GraphicsPath();
