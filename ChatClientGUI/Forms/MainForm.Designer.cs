@@ -2,15 +2,8 @@
 {
 	partial class MainForm
 	{
-		/// <summary>
-		/// Required designer variable.
-		/// </summary>
 		private System.ComponentModel.IContainer components = null;
 
-		/// <summary>
-		/// Clean up any resources being used.
-		/// </summary>
-		/// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
 		protected override void Dispose(bool disposing)
 		{
 			if (disposing && (components != null))
@@ -22,10 +15,6 @@
 
 		#region Windows Form Designer generated code
 
-		/// <summary>
-		/// Required method for Designer support - do not modify
-		/// the contents of this method with the code editor.
-		/// </summary>
 		private void InitializeComponent()
 		{
 			this.lstMessages = new System.Windows.Forms.ListBox();
@@ -34,7 +23,6 @@
 			this.btnFile = new System.Windows.Forms.Button();
 			this.label1 = new System.Windows.Forms.Label();
 			this.lstUsers = new System.Windows.Forms.ListBox();
-			this.btnExit = new System.Windows.Forms.Button();
 			this.pnlBottom = new System.Windows.Forms.Panel();
 			this.pnlRight = new System.Windows.Forms.Panel();
 			this.pnlCenter = new System.Windows.Forms.Panel();
@@ -60,6 +48,7 @@
 			this.lstMessages.ItemHeight = 35;
 			this.lstMessages.Location = new System.Drawing.Point(10, 10);
 			this.lstMessages.Name = "lstMessages";
+			this.lstMessages.SelectionMode = System.Windows.Forms.SelectionMode.None;
 			this.lstMessages.Size = new System.Drawing.Size(560, 396);
 			this.lstMessages.TabIndex = 0;
 			// 
@@ -68,87 +57,71 @@
 			this.txtMessage.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
 			| System.Windows.Forms.AnchorStyles.Left)
 			| System.Windows.Forms.AnchorStyles.Right)));
-			this.txtMessage.Font = new System.Drawing.Font("Segoe UI", 10F);
-			this.txtMessage.Location = new System.Drawing.Point(10, 10);
+			this.txtMessage.Font = new System.Drawing.Font("Segoe UI", 11F);
+			this.txtMessage.Location = new System.Drawing.Point(50, 15);
 			this.txtMessage.Multiline = true;
 			this.txtMessage.Name = "txtMessage";
-			this.txtMessage.Size = new System.Drawing.Size(465, 30);
+			this.txtMessage.Size = new System.Drawing.Size(475, 25);
 			this.txtMessage.TabIndex = 1;
 			// 
 			// btnSend
 			// 
 			this.btnSend.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.btnSend.BackColor = System.Drawing.Color.DodgerBlue;
+			this.btnSend.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(120)))), ((int)(((byte)(215)))));
 			this.btnSend.Cursor = System.Windows.Forms.Cursors.Hand;
 			this.btnSend.FlatAppearance.BorderSize = 0;
 			this.btnSend.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-			this.btnSend.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+			this.btnSend.Font = new System.Drawing.Font("Segoe UI Symbol", 12F, System.Drawing.FontStyle.Bold);
 			this.btnSend.ForeColor = System.Drawing.Color.White;
-			this.btnSend.Location = new System.Drawing.Point(481, 10);
+			this.btnSend.Location = new System.Drawing.Point(588, 5);
 			this.btnSend.Name = "btnSend";
-			this.btnSend.Size = new System.Drawing.Size(80, 30);
+			this.btnSend.Size = new System.Drawing.Size(40, 40);
 			this.btnSend.TabIndex = 2;
-			this.btnSend.Text = "SEND";
+			this.btnSend.Text = "➤";
 			this.btnSend.UseVisualStyleBackColor = false;
 			// 
 			// btnFile
 			// 
 			this.btnFile.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.btnFile.BackColor = System.Drawing.Color.Gray;
+			this.btnFile.BackColor = System.Drawing.Color.WhiteSmoke;
 			this.btnFile.Cursor = System.Windows.Forms.Cursors.Hand;
 			this.btnFile.FlatAppearance.BorderSize = 0;
 			this.btnFile.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-			this.btnFile.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-			this.btnFile.ForeColor = System.Drawing.Color.White;
-			this.btnFile.Location = new System.Drawing.Point(567, 10);
+			this.btnFile.Font = new System.Drawing.Font("Segoe UI Symbol", 12F);
+			this.btnFile.ForeColor = System.Drawing.Color.DimGray;
+			this.btnFile.Location = new System.Drawing.Point(542, 5);
 			this.btnFile.Name = "btnFile";
-			this.btnFile.Size = new System.Drawing.Size(50, 30);
+			this.btnFile.Size = new System.Drawing.Size(40, 40);
 			this.btnFile.TabIndex = 3;
-			this.btnFile.Text = "FILE";
+			this.btnFile.Text = "📎";
 			this.btnFile.UseVisualStyleBackColor = false;
 			// 
 			// label1
 			// 
 			this.label1.Dock = System.Windows.Forms.DockStyle.Top;
-			this.label1.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-			this.label1.ForeColor = System.Drawing.Color.DimGray;
+			this.label1.Font = new System.Drawing.Font("Segoe UI", 8F, System.Drawing.FontStyle.Bold);
+			this.label1.ForeColor = System.Drawing.Color.Gray;
 			this.label1.Location = new System.Drawing.Point(0, 0);
 			this.label1.Name = "label1";
-			this.label1.Padding = new System.Windows.Forms.Padding(5, 5, 0, 0);
+			this.label1.Padding = new System.Windows.Forms.Padding(10, 10, 0, 0);
 			this.label1.Size = new System.Drawing.Size(160, 30);
 			this.label1.TabIndex = 4;
-			this.label1.Text = "ONLINE USERS";
+			this.label1.Text = "CONTACTS";
 			// 
 			// lstUsers
 			// 
-			this.lstUsers.BackColor = System.Drawing.Color.WhiteSmoke;
+			this.lstUsers.BackColor = System.Drawing.Color.White;
 			this.lstUsers.BorderStyle = System.Windows.Forms.BorderStyle.None;
 			this.lstUsers.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.lstUsers.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
 			this.lstUsers.Font = new System.Drawing.Font("Segoe UI", 9F);
 			this.lstUsers.FormattingEnabled = true;
 			this.lstUsers.IntegralHeight = false;
-			this.lstUsers.ItemHeight = 25;
+			this.lstUsers.ItemHeight = 35;
 			this.lstUsers.Location = new System.Drawing.Point(0, 30);
 			this.lstUsers.Name = "lstUsers";
-			this.lstUsers.Size = new System.Drawing.Size(160, 386);
+			this.lstUsers.Size = new System.Drawing.Size(160, 436);
 			this.lstUsers.TabIndex = 5;
-			// 
-			// btnExit
-			// 
-			this.btnExit.BackColor = System.Drawing.Color.IndianRed;
-			this.btnExit.Cursor = System.Windows.Forms.Cursors.Hand;
-			this.btnExit.Dock = System.Windows.Forms.DockStyle.Bottom;
-			this.btnExit.FlatAppearance.BorderSize = 0;
-			this.btnExit.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-			this.btnExit.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-			this.btnExit.ForeColor = System.Drawing.Color.White;
-			this.btnExit.Location = new System.Drawing.Point(0, 416);
-			this.btnExit.Name = "btnExit";
-			this.btnExit.Size = new System.Drawing.Size(160, 30);
-			this.btnExit.TabIndex = 6;
-			this.btnExit.Text = "EXIT";
-			this.btnExit.UseVisualStyleBackColor = false;
 			// 
 			// pnlBottom
 			// 
@@ -164,10 +137,9 @@
 			// 
 			// pnlRight
 			// 
-			this.pnlRight.BackColor = System.Drawing.Color.WhiteSmoke;
+			this.pnlRight.BackColor = System.Drawing.Color.White;
 			this.pnlRight.Controls.Add(this.lstUsers);
 			this.pnlRight.Controls.Add(this.label1);
-			this.pnlRight.Controls.Add(this.btnExit);
 			this.pnlRight.Dock = System.Windows.Forms.DockStyle.Right;
 			this.pnlRight.Location = new System.Drawing.Point(640, 40);
 			this.pnlRight.Name = "pnlRight";
@@ -187,7 +159,7 @@
 			// 
 			// pnlHeader
 			// 
-			this.pnlHeader.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(246)))), ((int)(((byte)(247)))));
+			this.pnlHeader.BackColor = System.Drawing.Color.WhiteSmoke;
 			this.pnlHeader.Controls.Add(this.btnMinimize);
 			this.pnlHeader.Controls.Add(this.btnCloseApp);
 			this.pnlHeader.Controls.Add(this.lblTitle);
@@ -201,7 +173,7 @@
 			// 
 			this.lblTitle.AutoSize = true;
 			this.lblTitle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-			this.lblTitle.ForeColor = System.Drawing.Color.DimGray;
+			this.lblTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
 			this.lblTitle.Location = new System.Drawing.Point(12, 10);
 			this.lblTitle.Name = "lblTitle";
 			this.lblTitle.Size = new System.Drawing.Size(69, 19);
@@ -213,13 +185,14 @@
 			this.btnCloseApp.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.btnCloseApp.Cursor = System.Windows.Forms.Cursors.Hand;
 			this.btnCloseApp.FlatAppearance.BorderSize = 0;
+			this.btnCloseApp.FlatAppearance.MouseOverBackColor = System.Drawing.Color.IndianRed;
 			this.btnCloseApp.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-			this.btnCloseApp.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+			this.btnCloseApp.Font = new System.Drawing.Font("Segoe UI", 10F);
 			this.btnCloseApp.Location = new System.Drawing.Point(760, 0);
 			this.btnCloseApp.Name = "btnCloseApp";
 			this.btnCloseApp.Size = new System.Drawing.Size(40, 40);
 			this.btnCloseApp.TabIndex = 1;
-			this.btnCloseApp.Text = "X";
+			this.btnCloseApp.Text = "✕";
 			this.btnCloseApp.UseVisualStyleBackColor = true;
 			// 
 			// btnMinimize
@@ -228,19 +201,19 @@
 			this.btnMinimize.Cursor = System.Windows.Forms.Cursors.Hand;
 			this.btnMinimize.FlatAppearance.BorderSize = 0;
 			this.btnMinimize.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-			this.btnMinimize.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+			this.btnMinimize.Font = new System.Drawing.Font("Segoe UI", 10F);
 			this.btnMinimize.Location = new System.Drawing.Point(720, 0);
 			this.btnMinimize.Name = "btnMinimize";
 			this.btnMinimize.Size = new System.Drawing.Size(40, 40);
 			this.btnMinimize.TabIndex = 2;
-			this.btnMinimize.Text = "_";
+			this.btnMinimize.Text = "−";
 			this.btnMinimize.UseVisualStyleBackColor = true;
 			// 
 			// MainForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(800, 466);
+			this.ClientSize = new System.Drawing.Size(800, 506);
 			this.Controls.Add(this.pnlCenter);
 			this.Controls.Add(this.pnlRight);
 			this.Controls.Add(this.pnlBottom);
@@ -256,19 +229,17 @@
 			this.pnlHeader.ResumeLayout(false);
 			this.pnlHeader.PerformLayout();
 			this.ResumeLayout(false);
-
 		}
 
 		#endregion
 
-		// DEKLARÁCIÓK - Csak itt szerepelhetnek! Ellenőrizd a MainForm.cs-t, hogy onnan törölve lettek-e!
+		// DEKLARÁCIÓK - Csak itt!
 		private System.Windows.Forms.ListBox lstMessages;
 		private System.Windows.Forms.TextBox txtMessage;
 		private System.Windows.Forms.Button btnSend;
 		private System.Windows.Forms.Button btnFile;
 		private System.Windows.Forms.Label label1;
 		private System.Windows.Forms.ListBox lstUsers;
-		private System.Windows.Forms.Button btnExit;
 		private System.Windows.Forms.Panel pnlBottom;
 		private System.Windows.Forms.Panel pnlRight;
 		private System.Windows.Forms.Panel pnlCenter;

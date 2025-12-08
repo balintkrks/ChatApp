@@ -11,7 +11,7 @@ namespace ChatClientGUI.Forms
 {
 	public partial class MainForm : Form
 	{
-		// --- WINAPI KONSTANSOK AZ ÁTMÉRETEZÉSHEZ ---
+		// --- WINAPI ---
 		private const int WM_NCHITTEST = 0x84;
 		private const int HTCLIENT = 0x1;
 		private const int HTLEFT = 10;
@@ -37,22 +37,21 @@ namespace ChatClientGUI.Forms
 		public MainForm(ClientService service, string myName)
 		{
 			InitializeComponent();
-			this.SetStyle(ControlStyles.ResizeRedraw, true); // Simább átméretezés
-			this.DoubleBuffered = true; // Vibrálás csökkentése
+			this.SetStyle(ControlStyles.ResizeRedraw, true);
+			this.DoubleBuffered = true;
 
 			_service = service;
 			_myUsername = string.IsNullOrEmpty(myName) ? "Me" : myName;
 
 			lblTitle.Text = $"ChatApp - {_myUsername}";
 
-			// Kezdeti stílusok beállítása
+			// KEZDETI FORMÁZÁS
 			UpdateControlRegions();
 
-			// INPUT MEZŐ STÍLUS
-			txtMessage.BackColor = Color.FromArgb(240, 242, 245);
+			// INPUT MEZŐ
+			txtMessage.BackColor = Color.FromArgb(245, 245, 245);
 			txtMessage.BorderStyle = BorderStyle.None;
 
-			// Események feliratkozása
 			_service.MessageReceived += OnMessageReceived;
 			_service.ConnectionLost += OnConnectionLost;
 			_service.FileReceived += OnFileReceived;
@@ -60,8 +59,8 @@ namespace ChatClientGUI.Forms
 
 			btnSend.Click += async (s, e) => await SendMessage();
 			btnFile.Click += async (s, e) => await SendFile();
-			btnExit.Click += (s, e) => Application.Exit();
 
+			// Felső gombok
 			btnCloseApp.Click += (s, e) => Application.Exit();
 			btnMinimize.Click += (s, e) => this.WindowState = FormWindowState.Minimized;
 
@@ -70,18 +69,17 @@ namespace ChatClientGUI.Forms
 
 			pnlBottom.Paint += PnlBottom_Paint;
 
-			// DYNAMIKUS FRISSÍTÉS ÁTMÉRETEZÉSKOR (BUGFIX)
 			this.SizeChanged += (s, e) =>
 			{
-				this.Invalidate(); // Keret újrarajzolása
-				UpdateControlRegions(); // Gombok és input mező újravágása
-				pnlBottom.Invalidate(); // Alsó sáv újrarajzolása
+				this.Invalidate();
+				UpdateControlRegions();
+				pnlBottom.Invalidate();
 			};
 
 			txtMessage.SizeChanged += (s, e) =>
 			{
-				// Input mező vágásának frissítése, ha változik a mérete
-				txtMessage.Region = new Region(new Rectangle(2, 2, txtMessage.Width - 4, txtMessage.Height - 4));
+				if (txtMessage.Width > 4 && txtMessage.Height > 4)
+					txtMessage.Region = new Region(new Rectangle(2, 2, txtMessage.Width - 4, txtMessage.Height - 4));
 			};
 
 			txtMessage.KeyDown += async (s, e) =>
@@ -113,95 +111,61 @@ namespace ChatClientGUI.Forms
 			lstUsers.SelectedIndex = 0;
 		}
 
-		// --- KERET ÉS ÁTMÉRETEZÉS ---
-
-		// 1. Vékony keret rajzolása az ablak köré
 		protected override void OnPaint(PaintEventArgs e)
 		{
 			base.OnPaint(e);
-			using (Pen pen = new Pen(Color.LightGray, 1))
+			using (Pen pen = new Pen(Color.Gainsboro, 1))
 			{
 				e.Graphics.DrawRectangle(pen, 0, 0, this.Width - 1, this.Height - 1);
 			}
 		}
 
-		// 2. Ablak átméretezés logika (WinAPI magic)
 		protected override void WndProc(ref Message m)
 		{
 			base.WndProc(ref m);
 			if (m.Msg == WM_NCHITTEST)
 			{
-				int resizeArea = 10; // 10 pixel széles sáv a széleken
+				int resizeArea = 10;
 				Point cursor = this.PointToClient(Cursor.Position);
-
-				if (cursor.X >= this.ClientSize.Width - resizeArea && cursor.Y >= this.ClientSize.Height - resizeArea)
-				{
-					m.Result = (IntPtr)HTBOTTOMRIGHT; // Jobb alsó sarok
-				}
-				else if (cursor.X <= resizeArea && cursor.Y >= this.ClientSize.Height - resizeArea)
-				{
-					m.Result = (IntPtr)HTBOTTOMLEFT; // Bal alsó
-				}
-				else if (cursor.X >= this.ClientSize.Width - resizeArea && cursor.Y <= resizeArea)
-				{
-					m.Result = (IntPtr)HTTOPRIGHT; // Jobb felső
-				}
-				else if (cursor.X <= resizeArea && cursor.Y <= resizeArea)
-				{
-					m.Result = (IntPtr)HTTOPLEFT; // Bal felső
-				}
-				else if (cursor.X <= resizeArea)
-				{
-					m.Result = (IntPtr)HTLEFT; // Bal szél
-				}
-				else if (cursor.X >= this.ClientSize.Width - resizeArea)
-				{
-					m.Result = (IntPtr)HTRIGHT; // Jobb szél
-				}
-				else if (cursor.Y <= resizeArea)
-				{
-					m.Result = (IntPtr)HTTOP; // Felső szél
-				}
-				else if (cursor.Y >= this.ClientSize.Height - resizeArea)
-				{
-					m.Result = (IntPtr)HTBOTTOM; // Alsó szél
-				}
+				if (cursor.X >= this.ClientSize.Width - resizeArea && cursor.Y >= this.ClientSize.Height - resizeArea) m.Result = (IntPtr)HTBOTTOMRIGHT;
+				else if (cursor.X <= resizeArea && cursor.Y >= this.ClientSize.Height - resizeArea) m.Result = (IntPtr)HTBOTTOMLEFT;
+				else if (cursor.X >= this.ClientSize.Width - resizeArea && cursor.Y <= resizeArea) m.Result = (IntPtr)HTTOPRIGHT;
+				else if (cursor.X <= resizeArea && cursor.Y <= resizeArea) m.Result = (IntPtr)HTTOPLEFT;
+				else if (cursor.X <= resizeArea) m.Result = (IntPtr)HTLEFT;
+				else if (cursor.X >= this.ClientSize.Width - resizeArea) m.Result = (IntPtr)HTRIGHT;
+				else if (cursor.Y <= resizeArea) m.Result = (IntPtr)HTTOP;
+				else if (cursor.Y >= this.ClientSize.Height - resizeArea) m.Result = (IntPtr)HTBOTTOM;
 			}
 		}
 
 		private void UpdateControlRegions()
 		{
-			ApplyRoundedRegion(btnSend, 20);
-			ApplyRoundedRegion(btnFile, 20);
-			ApplyRoundedRegion(btnExit, 20);
+			// KÖR ALAKÚ GOMBOK (Width == Height legyen a Designerben!)
+			ApplyCircleRegion(btnSend);
+			ApplyCircleRegion(btnFile);
 
-			// Textbox frissítése
 			if (txtMessage.Width > 4 && txtMessage.Height > 4)
 				txtMessage.Region = new Region(new Rectangle(2, 2, txtMessage.Width - 4, txtMessage.Height - 4));
 		}
 
-		// --- GRAFIKA ÉS LOGIKA (A KORÁBBI KÓDOK) ---
-
 		private void PnlBottom_Paint(object sender, PaintEventArgs e)
 		{
 			e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-			using (var pen = new Pen(Color.LightGray))
-			{
-				e.Graphics.DrawLine(pen, 0, 0, pnlBottom.Width, 0);
-			}
-			Rectangle rect = new Rectangle(txtMessage.Location.X - 10, txtMessage.Location.Y - 5, txtMessage.Width + 20, txtMessage.Height + 10);
-			using (GraphicsPath path = GetRoundedPath(rect, 15))
-			using (var brush = new SolidBrush(Color.FromArgb(240, 242, 245)))
+
+			// Textbox háttér ("Pill" alak)
+			Rectangle rect = new Rectangle(txtMessage.Location.X - 15, txtMessage.Location.Y - 8, txtMessage.Width + 30, txtMessage.Height + 16);
+			using (GraphicsPath path = GetRoundedPath(rect, 18))
+			using (var brush = new SolidBrush(Color.FromArgb(245, 245, 245)))
 			{
 				e.Graphics.FillPath(brush, path);
 			}
 		}
 
-		private void ApplyRoundedRegion(Control control, int radius)
+		private void ApplyCircleRegion(Control control)
 		{
-			Rectangle bounds = new Rectangle(0, 0, control.Width, control.Height);
-			using (GraphicsPath path = GetRoundedPath(bounds, radius))
+			using (GraphicsPath path = new GraphicsPath())
 			{
+				path.AddEllipse(0, 0, control.Width, control.Height);
 				control.Region = new Region(path);
 			}
 		}
@@ -212,33 +176,34 @@ namespace ChatClientGUI.Forms
 			SendMessage(this.Handle, 0x112, 0xf012, 0);
 		}
 
+		// --- RAJZOLÓ LOGIKA (Változatlan, de Font javítva) ---
 		private void LstUsers_DrawItem(object sender, DrawItemEventArgs e)
 		{
 			if (e.Index < 0) return;
 			e.DrawBackground();
 			if ((e.State & DrawItemState.Selected) == DrawItemState.Selected)
-				e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(220, 240, 255)), e.Bounds);
+				e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(235, 245, 255)), e.Bounds);
 			else
-				e.Graphics.FillRectangle(new SolidBrush(Color.WhiteSmoke), e.Bounds);
+				e.Graphics.FillRectangle(new SolidBrush(Color.White), e.Bounds);
 
 			string userName = lstUsers.Items[e.Index].ToString();
 			Graphics g = e.Graphics;
 			g.SmoothingMode = SmoothingMode.AntiAlias;
 			g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
 
-			int dotSize = 10;
-			int dotX = e.Bounds.Left + 10;
+			int dotSize = 8;
+			int dotX = e.Bounds.Left + 15;
 			int dotY = e.Bounds.Top + (e.Bounds.Height - dotSize) / 2;
 			Color dotColor = (userName == "[Global Chat]") ? Color.DodgerBlue : Color.LimeGreen;
 
 			using (var brush = new SolidBrush(dotColor))
 				g.FillEllipse(brush, dotX, dotY, dotSize, dotSize);
 
-			Color textColor = Color.Black;
-			Font font = (userName == "[Global Chat]") ? new Font(e.Font, FontStyle.Bold) : e.Font;
-			int textX = dotX + dotSize + 10;
-			Rectangle textRect = new Rectangle(textX, e.Bounds.Top, e.Bounds.Width - textX, e.Bounds.Height);
+			Color textColor = Color.FromArgb(64, 64, 64);
+			System.Drawing.Font font = (userName == "[Global Chat]") ? new System.Drawing.Font("Segoe UI", 9F, FontStyle.Bold) : new System.Drawing.Font("Segoe UI", 9F);
 
+			int textX = dotX + dotSize + 15;
+			Rectangle textRect = new Rectangle(textX, e.Bounds.Top, e.Bounds.Width - textX, e.Bounds.Height);
 			TextRenderer.DrawText(g, userName, font, textRect, textColor, TextFormatFlags.VerticalCenter | TextFormatFlags.Left);
 		}
 
@@ -248,7 +213,7 @@ namespace ChatClientGUI.Forms
 			string msg = lstMessages.Items[e.Index].ToString();
 			int maxWidth = (int)(lstMessages.Width * 0.7);
 			Size size = TextRenderer.MeasureText(e.Graphics, msg, lstMessages.Font, new Size(maxWidth, 0), TextFormatFlags.WordBreak);
-			e.ItemHeight = size.Height + 20;
+			e.ItemHeight = size.Height + 24;
 		}
 
 		private void LstMessages_DrawItem(object sender, DrawItemEventArgs e)
@@ -265,23 +230,27 @@ namespace ChatClientGUI.Forms
 
 			if (isSystem)
 			{
-				TextRenderer.DrawText(g, msg, new Font(e.Font, FontStyle.Italic), e.Bounds, Color.Gray, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.WordBreak);
+				TextRenderer.DrawText(g, msg, new System.Drawing.Font(e.Font, FontStyle.Italic), e.Bounds, Color.Gray, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.WordBreak);
 			}
 			else
 			{
-				Color bubbleColor = isMe ? Color.FromArgb(0, 120, 215) : Color.FromArgb(230, 230, 230);
+				// Letisztultabb színek
+				Color bubbleColor = isMe ? Color.FromArgb(0, 132, 255) : Color.FromArgb(240, 240, 240);
 				Color textColor = isMe ? Color.White : Color.Black;
+
 				int maxWidth = (int)(lstMessages.Width * 0.7);
 				Size size = TextRenderer.MeasureText(g, msg, e.Font, new Size(maxWidth, 0), TextFormatFlags.WordBreak);
-				int bubbleWidth = size.Width + 20;
-				int bubbleHeight = size.Height + 10;
+
+				int bubbleWidth = size.Width + 24;
+				int bubbleHeight = size.Height + 12;
+
 				Rectangle bubbleRect;
 				if (isMe)
-					bubbleRect = new Rectangle(e.Bounds.Right - bubbleWidth - 10, e.Bounds.Top + 5, bubbleWidth, bubbleHeight);
+					bubbleRect = new Rectangle(e.Bounds.Right - bubbleWidth - 15, e.Bounds.Top + 6, bubbleWidth, bubbleHeight);
 				else
-					bubbleRect = new Rectangle(e.Bounds.Left + 10, e.Bounds.Top + 5, bubbleWidth, bubbleHeight);
+					bubbleRect = new Rectangle(e.Bounds.Left + 15, e.Bounds.Top + 6, bubbleWidth, bubbleHeight);
 
-				using (GraphicsPath path = GetRoundedPath(bubbleRect, 10))
+				using (GraphicsPath path = GetRoundedPath(bubbleRect, 12))
 				using (var brush = new SolidBrush(bubbleColor))
 				{
 					g.FillPath(brush, path);
@@ -302,40 +271,25 @@ namespace ChatClientGUI.Forms
 			return path;
 		}
 
-		private bool IsMyMessage(string msg)
-		{
-			return msg.Contains($" {_myUsername}:") || msg.Contains($"[Private ->");
-		}
+		private bool IsMyMessage(string msg) => msg.Contains($" {_myUsername}:") || msg.Contains($"[Private ->");
 
+		// --- EGYÉB SEGÉDFÜGGVÉNYEK ---
 		private void HandleUserSelection(string selection)
 		{
-			if (selection == "[Global Chat]")
-			{
-				_currentChatPartner = null;
-				lblTitle.Text = $"ChatApp - {_myUsername} (Global)";
-			}
-			else
-			{
-				_currentChatPartner = selection;
-				lblTitle.Text = $"ChatApp - {_myUsername} -> {_currentChatPartner}";
-			}
+			if (selection == "[Global Chat]") { _currentChatPartner = null; lblTitle.Text = $"ChatApp - {_myUsername} (Global)"; }
+			else { _currentChatPartner = selection; lblTitle.Text = $"ChatApp - {_myUsername} -> {_currentChatPartner}"; }
 			RefreshChatView();
 		}
 
 		private void OnUserListReceived(string[] users)
 		{
 			if (IsDisposed || !IsHandleCreated) return;
-			Invoke((MethodInvoker)delegate
-			{
+			Invoke((MethodInvoker)delegate {
 				var currentSelection = lstUsers.SelectedItem;
 				lstUsers.Items.Clear();
 				lstUsers.Items.Add("[Global Chat]");
-				foreach (var user in users)
-				{
-					if (user != _myUsername) lstUsers.Items.Add(user);
-				}
-				if (currentSelection != null && lstUsers.Items.Contains(currentSelection))
-					lstUsers.SelectedItem = currentSelection;
+				foreach (var user in users) if (user != _myUsername) lstUsers.Items.Add(user);
+				if (currentSelection != null && lstUsers.Items.Contains(currentSelection)) lstUsers.SelectedItem = currentSelection;
 			});
 		}
 
@@ -344,17 +298,8 @@ namespace ChatClientGUI.Forms
 			lstMessages.Items.Clear();
 			foreach (var msg in _allMessages)
 			{
-				if (_currentChatPartner == null)
-				{
-					if (!msg.Contains("(privát)") && !msg.Contains("[Private ->") && !msg.Contains("(private)"))
-						lstMessages.Items.Add(msg);
-				}
-				else
-				{
-					bool fromPartner = msg.Contains($"(privát) {_currentChatPartner}:") || msg.Contains($"(private) {_currentChatPartner}:");
-					bool toPartner = msg.Contains($"[Private -> {_currentChatPartner}]");
-					if (fromPartner || toPartner) lstMessages.Items.Add(msg);
-				}
+				if (_currentChatPartner == null) { if (!msg.Contains("(privát)") && !msg.Contains("[Private ->") && !msg.Contains("(private)")) lstMessages.Items.Add(msg); }
+				else { bool fromPartner = msg.Contains($"(privát) {_currentChatPartner}:") || msg.Contains($"(private) {_currentChatPartner}:"); bool toPartner = msg.Contains($"[Private -> {_currentChatPartner}]"); if (fromPartner || toPartner) lstMessages.Items.Add(msg); }
 			}
 			if (lstMessages.Items.Count > 0) lstMessages.TopIndex = lstMessages.Items.Count - 1;
 		}
@@ -363,17 +308,9 @@ namespace ChatClientGUI.Forms
 		{
 			if (string.IsNullOrWhiteSpace(txtMessage.Text)) return;
 			string text = txtMessage.Text;
-			if (_currentChatPartner != null)
-			{
-				await _service.SendPrivateMessageAsync(_currentChatPartner, text);
-				_allMessages.Add($"[Private -> {_currentChatPartner}]: {text}");
-			}
-			else
-			{
-				await _service.SendMessageAsync(text);
-			}
-			txtMessage.Clear();
-			RefreshChatView();
+			if (_currentChatPartner != null) { await _service.SendPrivateMessageAsync(_currentChatPartner, text); _allMessages.Add($"[Private -> {_currentChatPartner}]: {text}"); }
+			else { await _service.SendMessageAsync(text); }
+			txtMessage.Clear(); RefreshChatView();
 		}
 
 		private async Task SendFile()
@@ -381,20 +318,10 @@ namespace ChatClientGUI.Forms
 			using var dialog = new OpenFileDialog();
 			if (dialog.ShowDialog() == DialogResult.OK)
 			{
-				string filePath = dialog.FileName;
-				string fileName = Path.GetFileName(filePath);
-				byte[] fileBytes = await File.ReadAllBytesAsync(filePath);
-				string recipient = _currentChatPartner ?? "";
+				string filePath = dialog.FileName; string fileName = Path.GetFileName(filePath); byte[] fileBytes = await File.ReadAllBytesAsync(filePath); string recipient = _currentChatPartner ?? "";
 				await _service.SendFileAsync(filePath, recipient);
-
-				string displayMsg = !string.IsNullOrEmpty(recipient)
-					? $"FILE [Private -> {recipient}]: {fileName} ({fileBytes.Length} byte) >>> CLICK TO SAVE <<<"
-					: $"FILE [Global]: {fileName} ({fileBytes.Length} byte) >>> CLICK TO SAVE <<<";
-
-				if (_pendingFiles.ContainsKey(displayMsg)) displayMsg += $" [{DateTime.Now.Ticks}]";
-				_pendingFiles[displayMsg] = (fileName, fileBytes);
-				_allMessages.Add(displayMsg);
-				RefreshChatView();
+				string displayMsg = !string.IsNullOrEmpty(recipient) ? $"FILE [Private -> {recipient}]: {fileName} ({fileBytes.Length} byte) >>> CLICK TO SAVE <<<" : $"FILE [Global]: {fileName} ({fileBytes.Length} byte) >>> CLICK TO SAVE <<<";
+				if (_pendingFiles.ContainsKey(displayMsg)) displayMsg += $" [{DateTime.Now.Ticks}]"; _pendingFiles[displayMsg] = (fileName, fileBytes); _allMessages.Add(displayMsg); RefreshChatView();
 			}
 		}
 
@@ -402,68 +329,14 @@ namespace ChatClientGUI.Forms
 		{
 			if (_pendingFiles.ContainsKey(selectedText))
 			{
-				var fileData = _pendingFiles[selectedText];
-				var result = MessageBox.Show($"Save file?\n\nName: {fileData.FileName}\nSize: {fileData.Content.Length} bytes", "Download", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-				if (result == DialogResult.Yes)
-				{
-					SaveFileToDisk(fileData.FileName, fileData.Content);
-					string newText = selectedText.Replace(">>> CLICK TO SAVE <<<", "[SAVED]");
-					int index = _allMessages.IndexOf(selectedText);
-					if (index != -1) _allMessages[index] = newText;
-					_pendingFiles.Remove(selectedText);
-					_pendingFiles[newText] = fileData;
-					RefreshChatView();
-				}
+				var fileData = _pendingFiles[selectedText]; var result = MessageBox.Show($"Save file?\n\nName: {fileData.FileName}\nSize: {fileData.Content.Length} bytes", "Download", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+				if (result == DialogResult.Yes) { SaveFileToDisk(fileData.FileName, fileData.Content); string newText = selectedText.Replace(">>> CLICK TO SAVE <<<", "[SAVED]"); int index = _allMessages.IndexOf(selectedText); if (index != -1) _allMessages[index] = newText; _pendingFiles.Remove(selectedText); _pendingFiles[newText] = fileData; RefreshChatView(); }
 			}
 		}
 
-		private void OnMessageReceived(string msg)
-		{
-			if (IsDisposed || !IsHandleCreated) return;
-			Invoke((MethodInvoker)delegate
-			{
-				_allMessages.Add(msg);
-				RefreshChatView();
-			});
-		}
-
-		private void OnFileReceived(string fileName, byte[] content)
-		{
-			if (IsDisposed || !IsHandleCreated) return;
-			Invoke((MethodInvoker)delegate
-			{
-				string displayMsg = $"INCOMING FILE: {fileName} ({content.Length} byte) >>> CLICK TO SAVE <<<";
-				if (_pendingFiles.ContainsKey(displayMsg)) displayMsg += $" [{DateTime.Now.Ticks}]";
-				_pendingFiles[displayMsg] = (fileName, content);
-				_allMessages.Add(displayMsg);
-				RefreshChatView();
-			});
-		}
-
-		private void SaveFileToDisk(string fileName, byte[] content)
-		{
-			try
-			{
-				string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
-				Directory.CreateDirectory(folder);
-				string fullPath = Path.Combine(folder, fileName);
-				File.WriteAllBytes(fullPath, content);
-				MessageBox.Show($"File saved: {fullPath}", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-			}
-			catch (Exception ex)
-			{
-				MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-			}
-		}
-
-		private void OnConnectionLost()
-		{
-			if (IsDisposed || !IsHandleCreated) return;
-			Invoke((MethodInvoker)delegate
-			{
-				MessageBox.Show("Disconnected from server.", "Connection Lost", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-				Application.Exit();
-			});
-		}
+		private void OnMessageReceived(string msg) { if (IsDisposed || !IsHandleCreated) return; Invoke((MethodInvoker)delegate { _allMessages.Add(msg); RefreshChatView(); }); }
+		private void OnFileReceived(string fileName, byte[] content) { if (IsDisposed || !IsHandleCreated) return; Invoke((MethodInvoker)delegate { string displayMsg = $"INCOMING FILE: {fileName} ({content.Length} byte) >>> CLICK TO SAVE <<<"; if (_pendingFiles.ContainsKey(displayMsg)) displayMsg += $" [{DateTime.Now.Ticks}]"; _pendingFiles[displayMsg] = (fileName, content); _allMessages.Add(displayMsg); RefreshChatView(); }); }
+		private void SaveFileToDisk(string fileName, byte[] content) { try { string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"); Directory.CreateDirectory(folder); string fullPath = Path.Combine(folder, fileName); File.WriteAllBytes(fullPath, content); MessageBox.Show($"File saved: {fullPath}", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information); } catch (Exception ex) { MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error); } }
+		private void OnConnectionLost() { if (IsDisposed || !IsHandleCreated) return; Invoke((MethodInvoker)delegate { MessageBox.Show("Disconnected from server.", "Connection Lost", MessageBoxButtons.OK, MessageBoxIcon.Warning); Application.Exit(); }); }
 	}
 }
