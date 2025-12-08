@@ -33,11 +33,11 @@ namespace ChatClientGUI.Forms
 			btnFile.Click += async (s, e) => await SendFile();
 			btnExit.Click += (s, e) => Application.Exit();
 
-			// CHAT Buborékok rajzolása
+			// --- CHAT BUBORÉKOK RAJZOLÁSA ---
 			lstMessages.MeasureItem += LstMessages_MeasureItem;
 			lstMessages.DrawItem += LstMessages_DrawItem;
 
-			// FELHASZNÁLÓ LISTA rajzolása (ÚJ)
+			// --- FELHASZNÁLÓ LISTA RAJZOLÁSA (ÚJ) ---
 			lstUsers.DrawItem += LstUsers_DrawItem;
 
 			lstMessages.DoubleClick += (s, e) =>
@@ -56,31 +56,31 @@ namespace ChatClientGUI.Forms
 			lstUsers.SelectedIndex = 0;
 		}
 
-		// --- FELHASZNÁLÓ LISTA RAJZOLÁSA ---
+		// === FELHASZNÁLÓ LISTA RAJZOLÁSA ===
 		private void LstUsers_DrawItem(object sender, DrawItemEventArgs e)
 		{
 			if (e.Index < 0) return;
 
-			// Háttér rajzolása (Kijelölésnél más szín)
+			// Háttér rajzolása (Kijelölésnél egyedi szín)
 			if ((e.State & DrawItemState.Selected) == DrawItemState.Selected)
 			{
-				e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(220, 240, 255)), e.Bounds); // Halvány kék kijelölés
+				e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(220, 240, 255)), e.Bounds); // Halványkék
 			}
 			else
 			{
-				e.Graphics.FillRectangle(new SolidBrush(Color.WhiteSmoke), e.Bounds);
+				e.Graphics.FillRectangle(new SolidBrush(Color.WhiteSmoke), e.Bounds); // Alap háttér
 			}
 
 			string userName = lstUsers.Items[e.Index].ToString();
 			Graphics g = e.Graphics;
 			g.SmoothingMode = SmoothingMode.AntiAlias;
 
-			// "Online" pötty rajzolása
+			// "Online" pötty (indikátor)
 			int dotSize = 10;
 			int dotX = e.Bounds.Left + 10;
 			int dotY = e.Bounds.Top + (e.Bounds.Height - dotSize) / 2;
 
-			// Ha "[Global Chat]", akkor kék ikon, amúgy zöld (online)
+			// Ha "[Global Chat]", akkor kék, amúgy zöld (mindenki online, aki itt van)
 			Color dotColor = (userName == "[Global Chat]") ? Color.DodgerBlue : Color.LimeGreen;
 
 			using (var brush = new SolidBrush(dotColor))
@@ -88,8 +88,9 @@ namespace ChatClientGUI.Forms
 				g.FillEllipse(brush, dotX, dotY, dotSize, dotSize);
 			}
 
-			// Név rajzolása
+			// Név kirajzolása
 			Color textColor = Color.Black;
+			// A Global Chat legyen félkövér
 			Font font = (userName == "[Global Chat]") ? new Font(e.Font, FontStyle.Bold) : e.Font;
 
 			int textX = dotX + dotSize + 10;
@@ -97,11 +98,11 @@ namespace ChatClientGUI.Forms
 
 			TextRenderer.DrawText(g, userName, font, textRect, textColor, TextFormatFlags.VerticalCenter | TextFormatFlags.Left);
 
-			// Fókusz keret eltüntetése (opcionális, szebb nélküle)
+			// Ha nem akarod a Windows alap pöttyös fókuszkeretét, ezt kikommentelheted:
 			// e.DrawFocusRectangle(); 
 		}
 
-		// --- CHAT BUBORÉK RAJZOLÁSA ---
+		// === CHAT BUBORÉKOK RAJZOLÁSA ===
 		private void LstMessages_MeasureItem(object sender, MeasureItemEventArgs e)
 		{
 			e.ItemHeight = 35;
