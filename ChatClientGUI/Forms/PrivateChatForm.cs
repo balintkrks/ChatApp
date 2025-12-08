@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -11,6 +10,18 @@ namespace ChatClientGUI.Forms
 {
 	public partial class PrivateChatForm : Form
 	{
+		// --- WINAPI ---
+		private const int WM_NCHITTEST = 0x84;
+		private const int HTCLIENT = 0x1;
+		private const int HTLEFT = 10;
+		private const int HTRIGHT = 11;
+		private const int HTTOP = 12;
+		private const int HTTOPLEFT = 13;
+		private const int HTTOPRIGHT = 14;
+		private const int HTBOTTOM = 15;
+		private const int HTBOTTOMLEFT = 16;
+		private const int HTBOTTOMRIGHT = 17;
+
 		[DllImport("user32.dll", EntryPoint = "ReleaseCapture")]
 		private extern static void ReleaseCapture();
 		[DllImport("user32.dll", EntryPoint = "SendMessage")]
@@ -22,21 +33,43 @@ namespace ChatClientGUI.Forms
 		public PrivateChatForm(ClientService service, string targetUser)
 		{
 			InitializeComponent();
+			this.SetStyle(ControlStyles.ResizeRedraw, true);
+			this.DoubleBuffered = true;
+
 			_service = service;
 			_targetUser = targetUser;
 
 			lblTitle.Text = $"Private Chat - {_targetUser}";
 
-			ApplyRoundedRegion(btnSendPrivate, 20);
+			UpdateControlRegions();
+
+			// INPUT STÍLUS
+			txtPrivateInput.BackColor = Color.FromArgb(240, 242, 245);
+			txtPrivateInput.BorderStyle = BorderStyle.None;
 
 			_service.MessageReceived += OnMessageReceived;
 			btnSendPrivate.Click += async (s, e) => await SendPrivate();
 
-			// Fejléc
 			btnCloseApp.Click += (s, e) => this.Close();
 			btnMinimize.Click += (s, e) => this.WindowState = FormWindowState.Minimized;
 			pnlHeader.MouseDown += PnlHeader_MouseDown;
 			lblTitle.MouseDown += PnlHeader_MouseDown;
+
+			pnlBottom.Paint += PnlBottom_Paint;
+
+			// ÁTMÉRETEZÉS FRISSÍTÉS
+			this.SizeChanged += (s, e) =>
+			{
+				this.Invalidate();
+				UpdateControlRegions();
+				pnlBottom.Invalidate();
+			};
+
+			txtPrivateInput.SizeChanged += (s, e) =>
+			{
+				if (txtPrivateInput.Width > 4 && txtPrivateInput.Height > 4)
+					txtPrivateInput.Region = new Region(new Rectangle(2, 2, txtPrivateInput.Width - 4, txtPrivateInput.Height - 4));
+			};
 
 			txtPrivateInput.KeyDown += async (s, e) =>
 			{
@@ -51,6 +84,60 @@ namespace ChatClientGUI.Forms
 			lstPrivateMessages.DrawItem += LstPrivateMessages_DrawItem;
 
 			this.FormClosing += (s, e) => _service.MessageReceived -= OnMessageReceived;
+		}
+
+		// --- KERET ÉS ÁTMÉRETEZÉS ---
+		protected override void OnPaint(PaintEventArgs e)
+		{
+			base.OnPaint(e);
+			using (Pen pen = new Pen(Color.LightGray, 1))
+			{
+				e.Graphics.DrawRectangle(pen, 0, 0, this.Width - 1, this.Height - 1);
+			}
+		}
+
+		protected override void WndProc(ref Message m)
+		{
+			base.WndProc(ref m);
+			if (m.Msg == WM_NCHITTEST)
+			{
+				int resizeArea = 10;
+				Point cursor = this.PointToClient(Cursor.Position);
+
+				if (cursor.X >= this.ClientSize.Width - resizeArea && cursor.Y >= this.ClientSize.Height - resizeArea) m.Result = (IntPtr)HTBOTTOMRIGHT;
+				else if (cursor.X <= resizeArea && cursor.Y >= this.ClientSize.Height - resizeArea) m.Result = (IntPtr)HTBOTTOMLEFT;
+				else if (cursor.X >= this.ClientSize.Width - resizeArea && cursor.Y <= resizeArea) m.Result = (IntPtr)HTTOPRIGHT;
+				else if (cursor.X <= resizeArea && cursor.Y <= resizeArea) m.Result = (IntPtr)HTTOPLEFT;
+				else if (cursor.X <= resizeArea) m.Result = (IntPtr)HTLEFT;
+				else if (cursor.X >= this.ClientSize.Width - resizeArea) m.Result = (IntPtr)HTRIGHT;
+				else if (cursor.Y <= resizeArea) m.Result = (IntPtr)HTTOP;
+				else if (cursor.Y >= this.ClientSize.Height - resizeArea) m.Result = (IntPtr)HTBOTTOM;
+			}
+		}
+
+		private void UpdateControlRegions()
+		{
+			ApplyRoundedRegion(btnSendPrivate, 20);
+
+			if (txtPrivateInput.Width > 4 && txtPrivateInput.Height > 4)
+				txtPrivateInput.Region = new Region(new Rectangle(2, 2, txtPrivateInput.Width - 4, txtPrivateInput.Height - 4));
+		}
+
+		// --- LOGIKA ---
+
+		private void PnlBottom_Paint(object sender, PaintEventArgs e)
+		{
+			e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+			using (var pen = new Pen(Color.LightGray))
+			{
+				e.Graphics.DrawLine(pen, 0, 0, pnlBottom.Width, 0);
+			}
+			Rectangle rect = new Rectangle(txtPrivateInput.Location.X - 10, txtPrivateInput.Location.Y - 5, txtPrivateInput.Width + 20, txtPrivateInput.Height + 10);
+			using (GraphicsPath path = GetRoundedPath(rect, 15))
+			using (var brush = new SolidBrush(Color.FromArgb(240, 242, 245)))
+			{
+				e.Graphics.FillPath(brush, path);
+			}
 		}
 
 		private void ApplyRoundedRegion(Control control, int radius)
@@ -80,7 +167,6 @@ namespace ChatClientGUI.Forms
 		private void LstPrivateMessages_DrawItem(object sender, DrawItemEventArgs e)
 		{
 			if (e.Index < 0) return;
-
 			e.DrawBackground();
 			string msg = lstPrivateMessages.Items[e.Index].ToString();
 			Graphics g = e.Graphics;

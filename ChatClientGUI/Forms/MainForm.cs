@@ -2,8 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.Reflection.PortableExecutable;
-using System.Runtime.InteropServices; // Kell az ablak mozgatásához
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using ChatClientGUI.Services;
@@ -12,7 +11,18 @@ namespace ChatClientGUI.Forms
 {
 	public partial class MainForm : Form
 	{
-		// --- ABLAK MOZGATÁS (WinAPI) ---
+		// --- WINAPI KONSTANSOK AZ ÁTMÉRETEZÉSHEZ ---
+		private const int WM_NCHITTEST = 0x84;
+		private const int HTCLIENT = 0x1;
+		private const int HTLEFT = 10;
+		private const int HTRIGHT = 11;
+		private const int HTTOP = 12;
+		private const int HTTOPLEFT = 13;
+		private const int HTTOPRIGHT = 14;
+		private const int HTBOTTOM = 15;
+		private const int HTBOTTOMLEFT = 16;
+		private const int HTBOTTOMRIGHT = 17;
+
 		[DllImport("user32.dll", EntryPoint = "ReleaseCapture")]
 		private extern static void ReleaseCapture();
 		[DllImport("user32.dll", EntryPoint = "SendMessage")]
@@ -27,36 +37,53 @@ namespace ChatClientGUI.Forms
 		public MainForm(ClientService service, string myName)
 		{
 			InitializeComponent();
+			this.SetStyle(ControlStyles.ResizeRedraw, true); // Simább átméretezés
+			this.DoubleBuffered = true; // Vibrálás csökkentése
+
 			_service = service;
 			_myUsername = string.IsNullOrEmpty(myName) ? "Me" : myName;
 
-			// Cím beállítása a saját fejlécen
 			lblTitle.Text = $"ChatApp - {_myUsername}";
 
-			// Gombok lekerekítése (Pill shape)
-			ApplyRoundedRegion(btnSend, 20);
-			ApplyRoundedRegion(btnFile, 20);
-			ApplyRoundedRegion(btnExit, 20);
+			// Kezdeti stílusok beállítása
+			UpdateControlRegions();
 
+			// INPUT MEZŐ STÍLUS
+			txtMessage.BackColor = Color.FromArgb(240, 242, 245);
+			txtMessage.BorderStyle = BorderStyle.None;
+
+			// Események feliratkozása
 			_service.MessageReceived += OnMessageReceived;
 			_service.ConnectionLost += OnConnectionLost;
 			_service.FileReceived += OnFileReceived;
 			_service.UserListReceived += OnUserListReceived;
 
-			// Gomb események
 			btnSend.Click += async (s, e) => await SendMessage();
 			btnFile.Click += async (s, e) => await SendFile();
 			btnExit.Click += (s, e) => Application.Exit();
 
-			// Fejléc gombok
 			btnCloseApp.Click += (s, e) => Application.Exit();
 			btnMinimize.Click += (s, e) => this.WindowState = FormWindowState.Minimized;
 
-			// Ablak mozgatása a fejléccel
 			pnlHeader.MouseDown += PnlHeader_MouseDown;
 			lblTitle.MouseDown += PnlHeader_MouseDown;
 
-			// Enter küldés
+			pnlBottom.Paint += PnlBottom_Paint;
+
+			// DYNAMIKUS FRISSÍTÉS ÁTMÉRETEZÉSKOR (BUGFIX)
+			this.SizeChanged += (s, e) =>
+			{
+				this.Invalidate(); // Keret újrarajzolása
+				UpdateControlRegions(); // Gombok és input mező újravágása
+				pnlBottom.Invalidate(); // Alsó sáv újrarajzolása
+			};
+
+			txtMessage.SizeChanged += (s, e) =>
+			{
+				// Input mező vágásának frissítése, ha változik a mérete
+				txtMessage.Region = new Region(new Rectangle(2, 2, txtMessage.Width - 4, txtMessage.Height - 4));
+			};
+
 			txtMessage.KeyDown += async (s, e) =>
 			{
 				if (e.KeyCode == Keys.Enter && !e.Shift)
@@ -66,7 +93,6 @@ namespace ChatClientGUI.Forms
 				}
 			};
 
-			// Rajzolás
 			lstMessages.MeasureItem += LstMessages_MeasureItem;
 			lstMessages.DrawItem += LstMessages_DrawItem;
 			lstUsers.DrawItem += LstUsers_DrawItem;
@@ -87,7 +113,90 @@ namespace ChatClientGUI.Forms
 			lstUsers.SelectedIndex = 0;
 		}
 
-		// --- GOMB LEKEREKÍTÉS SEGÉD ---
+		// --- KERET ÉS ÁTMÉRETEZÉS ---
+
+		// 1. Vékony keret rajzolása az ablak köré
+		protected override void OnPaint(PaintEventArgs e)
+		{
+			base.OnPaint(e);
+			using (Pen pen = new Pen(Color.LightGray, 1))
+			{
+				e.Graphics.DrawRectangle(pen, 0, 0, this.Width - 1, this.Height - 1);
+			}
+		}
+
+		// 2. Ablak átméretezés logika (WinAPI magic)
+		protected override void WndProc(ref Message m)
+		{
+			base.WndProc(ref m);
+			if (m.Msg == WM_NCHITTEST)
+			{
+				int resizeArea = 10; // 10 pixel széles sáv a széleken
+				Point cursor = this.PointToClient(Cursor.Position);
+
+				if (cursor.X >= this.ClientSize.Width - resizeArea && cursor.Y >= this.ClientSize.Height - resizeArea)
+				{
+					m.Result = (IntPtr)HTBOTTOMRIGHT; // Jobb alsó sarok
+				}
+				else if (cursor.X <= resizeArea && cursor.Y >= this.ClientSize.Height - resizeArea)
+				{
+					m.Result = (IntPtr)HTBOTTOMLEFT; // Bal alsó
+				}
+				else if (cursor.X >= this.ClientSize.Width - resizeArea && cursor.Y <= resizeArea)
+				{
+					m.Result = (IntPtr)HTTOPRIGHT; // Jobb felső
+				}
+				else if (cursor.X <= resizeArea && cursor.Y <= resizeArea)
+				{
+					m.Result = (IntPtr)HTTOPLEFT; // Bal felső
+				}
+				else if (cursor.X <= resizeArea)
+				{
+					m.Result = (IntPtr)HTLEFT; // Bal szél
+				}
+				else if (cursor.X >= this.ClientSize.Width - resizeArea)
+				{
+					m.Result = (IntPtr)HTRIGHT; // Jobb szél
+				}
+				else if (cursor.Y <= resizeArea)
+				{
+					m.Result = (IntPtr)HTTOP; // Felső szél
+				}
+				else if (cursor.Y >= this.ClientSize.Height - resizeArea)
+				{
+					m.Result = (IntPtr)HTBOTTOM; // Alsó szél
+				}
+			}
+		}
+
+		private void UpdateControlRegions()
+		{
+			ApplyRoundedRegion(btnSend, 20);
+			ApplyRoundedRegion(btnFile, 20);
+			ApplyRoundedRegion(btnExit, 20);
+
+			// Textbox frissítése
+			if (txtMessage.Width > 4 && txtMessage.Height > 4)
+				txtMessage.Region = new Region(new Rectangle(2, 2, txtMessage.Width - 4, txtMessage.Height - 4));
+		}
+
+		// --- GRAFIKA ÉS LOGIKA (A KORÁBBI KÓDOK) ---
+
+		private void PnlBottom_Paint(object sender, PaintEventArgs e)
+		{
+			e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+			using (var pen = new Pen(Color.LightGray))
+			{
+				e.Graphics.DrawLine(pen, 0, 0, pnlBottom.Width, 0);
+			}
+			Rectangle rect = new Rectangle(txtMessage.Location.X - 10, txtMessage.Location.Y - 5, txtMessage.Width + 20, txtMessage.Height + 10);
+			using (GraphicsPath path = GetRoundedPath(rect, 15))
+			using (var brush = new SolidBrush(Color.FromArgb(240, 242, 245)))
+			{
+				e.Graphics.FillPath(brush, path);
+			}
+		}
+
 		private void ApplyRoundedRegion(Control control, int radius)
 		{
 			Rectangle bounds = new Rectangle(0, 0, control.Width, control.Height);
@@ -97,18 +206,15 @@ namespace ChatClientGUI.Forms
 			}
 		}
 
-		// --- ABLAK MOZGATÁS ---
 		private void PnlHeader_MouseDown(object sender, MouseEventArgs e)
 		{
 			ReleaseCapture();
 			SendMessage(this.Handle, 0x112, 0xf012, 0);
 		}
 
-		// --- FELHASZNÁLÓ LISTA ---
 		private void LstUsers_DrawItem(object sender, DrawItemEventArgs e)
 		{
 			if (e.Index < 0) return;
-
 			e.DrawBackground();
 			if ((e.State & DrawItemState.Selected) == DrawItemState.Selected)
 				e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(220, 240, 255)), e.Bounds);
@@ -136,7 +242,6 @@ namespace ChatClientGUI.Forms
 			TextRenderer.DrawText(g, userName, font, textRect, textColor, TextFormatFlags.VerticalCenter | TextFormatFlags.Left);
 		}
 
-		// --- CHAT BUBORÉKOK ---
 		private void LstMessages_MeasureItem(object sender, MeasureItemEventArgs e)
 		{
 			if (e.Index < 0 || e.Index >= lstMessages.Items.Count) return;
@@ -149,7 +254,6 @@ namespace ChatClientGUI.Forms
 		private void LstMessages_DrawItem(object sender, DrawItemEventArgs e)
 		{
 			if (e.Index < 0) return;
-
 			e.DrawBackground();
 			string msg = lstMessages.Items[e.Index].ToString();
 			Graphics g = e.Graphics;
@@ -167,13 +271,10 @@ namespace ChatClientGUI.Forms
 			{
 				Color bubbleColor = isMe ? Color.FromArgb(0, 120, 215) : Color.FromArgb(230, 230, 230);
 				Color textColor = isMe ? Color.White : Color.Black;
-
 				int maxWidth = (int)(lstMessages.Width * 0.7);
 				Size size = TextRenderer.MeasureText(g, msg, e.Font, new Size(maxWidth, 0), TextFormatFlags.WordBreak);
-
 				int bubbleWidth = size.Width + 20;
 				int bubbleHeight = size.Height + 10;
-
 				Rectangle bubbleRect;
 				if (isMe)
 					bubbleRect = new Rectangle(e.Bounds.Right - bubbleWidth - 10, e.Bounds.Top + 5, bubbleWidth, bubbleHeight);
@@ -185,7 +286,6 @@ namespace ChatClientGUI.Forms
 				{
 					g.FillPath(brush, path);
 				}
-
 				TextRenderer.DrawText(g, msg, e.Font, bubbleRect, textColor, TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter | TextFormatFlags.WordBreak);
 			}
 		}
