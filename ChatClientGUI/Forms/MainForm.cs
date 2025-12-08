@@ -22,6 +22,7 @@ namespace ChatClientGUI.Forms
 		private const int HTBOTTOM = 15;
 		private const int HTBOTTOMLEFT = 16;
 		private const int HTBOTTOMRIGHT = 17;
+		private const int CS_DROPSHADOW = 0x00020000; // Árnyék konstans
 
 		[DllImport("user32.dll", EntryPoint = "ReleaseCapture")]
 		private extern static void ReleaseCapture();
@@ -34,6 +35,17 @@ namespace ChatClientGUI.Forms
 		private readonly List<string> _allMessages = new List<string>();
 		private readonly Dictionary<string, (string FileName, byte[] Content)> _pendingFiles = new Dictionary<string, (string, byte[])>();
 
+		// --- ABLAK ÁRNYÉK ---
+		protected override CreateParams CreateParams
+		{
+			get
+			{
+				CreateParams cp = base.CreateParams;
+				cp.ClassStyle |= CS_DROPSHADOW;
+				return cp;
+			}
+		}
+
 		public MainForm(ClientService service, string myName)
 		{
 			InitializeComponent();
@@ -45,13 +57,10 @@ namespace ChatClientGUI.Forms
 
 			lblTitle.Text = $"ChatApp - {_myUsername}";
 
-			// Gombok kerekítése
 			UpdateControlRegions();
 
-			// INPUT MEZŐ beállítása (átlátszóbb hatásért)
 			txtMessage.BackColor = Color.WhiteSmoke;
 			txtMessage.BorderStyle = BorderStyle.None;
-			// Kicsit beljebb húzzuk a szöveget
 			txtMessage.Margin = new Padding(5);
 
 			_service.MessageReceived += OnMessageReceived;
@@ -62,8 +71,24 @@ namespace ChatClientGUI.Forms
 			btnSend.Click += async (s, e) => await SendMessage();
 			btnFile.Click += async (s, e) => await SendFile();
 
+			// --- HOVER EFFEKTEK ---
+			// Küldés gomb (Kék -> Sötétkék)
+			btnSend.MouseEnter += (s, e) => btnSend.BackColor = Color.FromArgb(0, 90, 180);
+			btnSend.MouseLeave += (s, e) => btnSend.BackColor = Color.FromArgb(0, 120, 215);
+
+			// Fájl gomb (Szürke -> Sötétebb szürke)
+			btnFile.MouseEnter += (s, e) => btnFile.BackColor = Color.DarkGray;
+			btnFile.MouseLeave += (s, e) => btnFile.BackColor = Color.Gainsboro; // vagy eredeti szín
+
+			// Bezárás gomb (Piros lesz)
 			btnCloseApp.Click += (s, e) => Application.Exit();
+			btnCloseApp.MouseEnter += (s, e) => { btnCloseApp.BackColor = Color.IndianRed; btnCloseApp.ForeColor = Color.White; };
+			btnCloseApp.MouseLeave += (s, e) => { btnCloseApp.BackColor = Color.Transparent; btnCloseApp.ForeColor = Color.Black; };
+
+			// Minimalizálás
 			btnMinimize.Click += (s, e) => this.WindowState = FormWindowState.Minimized;
+			btnMinimize.MouseEnter += (s, e) => btnMinimize.BackColor = Color.LightGray;
+			btnMinimize.MouseLeave += (s, e) => btnMinimize.BackColor = Color.Transparent;
 
 			pnlHeader.MouseDown += PnlHeader_MouseDown;
 			lblTitle.MouseDown += PnlHeader_MouseDown;
@@ -110,7 +135,6 @@ namespace ChatClientGUI.Forms
 
 		protected override void OnPaint(PaintEventArgs e)
 		{
-			// Ablak keret rajzolása (High Quality)
 			e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
 			using (Pen pen = new Pen(Color.LightGray, 1))
 			{
@@ -120,17 +144,14 @@ namespace ChatClientGUI.Forms
 
 		private void PnlBottom_Paint(object sender, PaintEventArgs e)
 		{
-			e.Graphics.SmoothingMode = SmoothingMode.HighQuality; // Éles élek
+			e.Graphics.SmoothingMode = SmoothingMode.HighQuality;
 			e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
 
-			// Felső vonal
 			using (var pen = new Pen(Color.FromArgb(230, 230, 230)))
 			{
 				e.Graphics.DrawLine(pen, 0, 0, pnlBottom.Width, 0);
 			}
 
-			// Szövegdoboz háttere (Buborék)
-			// Pontosan a txtMessage köré rajzoljuk, + paddinggal
 			Rectangle bgRect = new Rectangle(
 				txtMessage.Location.X - 10,
 				txtMessage.Location.Y - 5,
@@ -139,7 +160,7 @@ namespace ChatClientGUI.Forms
 			);
 
 			using (GraphicsPath path = GetRoundedPath(bgRect, 18))
-			using (var brush = new SolidBrush(Color.WhiteSmoke)) // Ugyanaz mint a txtMessage háttér
+			using (var brush = new SolidBrush(Color.WhiteSmoke))
 			{
 				e.Graphics.FillPath(brush, path);
 			}
@@ -160,19 +181,14 @@ namespace ChatClientGUI.Forms
 			}
 		}
 
-		// --- BUBORÉK ÉS LISTA RAJZOLÁS (High Quality) ---
-
+		// --- RAJZOLÁS ---
 		private void LstMessages_DrawItem(object sender, DrawItemEventArgs e)
 		{
 			if (e.Index < 0) return;
-
-			// Háttér törlése
 			e.Graphics.FillRectangle(Brushes.White, e.Bounds);
 
 			string msg = lstMessages.Items[e.Index].ToString();
 			Graphics g = e.Graphics;
-
-			// MAXIMALIZÁLT MINŐSÉG
 			g.SmoothingMode = SmoothingMode.AntiAlias;
 			g.InterpolationMode = InterpolationMode.HighQualityBicubic;
 			g.PixelOffsetMode = PixelOffsetMode.HighQuality;
@@ -208,10 +224,7 @@ namespace ChatClientGUI.Forms
 					g.FillPath(brush, path);
 				}
 
-				// Szöveg igazítása a buborékon belül
-				Rectangle textRect = bubbleRect;
-				// Kicsi padding a szövegnek
-				TextRenderer.DrawText(g, msg, e.Font, textRect, textColor, TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter | TextFormatFlags.WordBreak);
+				TextRenderer.DrawText(g, msg, e.Font, bubbleRect, textColor, TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter | TextFormatFlags.WordBreak);
 			}
 		}
 
@@ -219,7 +232,6 @@ namespace ChatClientGUI.Forms
 		{
 			if (e.Index < 0) return;
 
-			// Háttér
 			if ((e.State & DrawItemState.Selected) == DrawItemState.Selected)
 				e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(235, 245, 255)), e.Bounds);
 			else
@@ -243,11 +255,9 @@ namespace ChatClientGUI.Forms
 
 			int textX = dotX + dotSize + 12;
 			Rectangle textRect = new Rectangle(textX, e.Bounds.Top, e.Bounds.Width - textX, e.Bounds.Height);
-
 			TextRenderer.DrawText(g, userName, font, textRect, textColor, TextFormatFlags.VerticalCenter | TextFormatFlags.Left);
 		}
 
-		// --- HELPEREK ---
 		private GraphicsPath GetRoundedPath(Rectangle rect, int radius)
 		{
 			GraphicsPath path = new GraphicsPath();

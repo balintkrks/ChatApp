@@ -10,7 +10,6 @@ namespace ChatClientGUI.Forms
 {
 	public partial class PrivateChatForm : Form
 	{
-		// --- WINAPI ---
 		private const int WM_NCHITTEST = 0x84;
 		private const int HTCLIENT = 0x1;
 		private const int HTLEFT = 10;
@@ -21,6 +20,7 @@ namespace ChatClientGUI.Forms
 		private const int HTBOTTOM = 15;
 		private const int HTBOTTOMLEFT = 16;
 		private const int HTBOTTOMRIGHT = 17;
+		private const int CS_DROPSHADOW = 0x00020000;
 
 		[DllImport("user32.dll", EntryPoint = "ReleaseCapture")]
 		private extern static void ReleaseCapture();
@@ -29,6 +29,17 @@ namespace ChatClientGUI.Forms
 
 		private readonly ClientService _service;
 		private readonly string _targetUser;
+
+		// ÁRNYÉK
+		protected override CreateParams CreateParams
+		{
+			get
+			{
+				CreateParams cp = base.CreateParams;
+				cp.ClassStyle |= CS_DROPSHADOW;
+				return cp;
+			}
+		}
 
 		public PrivateChatForm(ClientService service, string targetUser)
 		{
@@ -43,21 +54,29 @@ namespace ChatClientGUI.Forms
 
 			UpdateControlRegions();
 
-			// INPUT STÍLUS
 			txtPrivateInput.BackColor = Color.FromArgb(240, 242, 245);
 			txtPrivateInput.BorderStyle = BorderStyle.None;
 
 			_service.MessageReceived += OnMessageReceived;
 			btnSendPrivate.Click += async (s, e) => await SendPrivate();
 
+			// HOVER EFFEKTEK
+			btnSendPrivate.MouseEnter += (s, e) => btnSendPrivate.BackColor = Color.FromArgb(0, 90, 180);
+			btnSendPrivate.MouseLeave += (s, e) => btnSendPrivate.BackColor = Color.DodgerBlue;
+
 			btnCloseApp.Click += (s, e) => this.Close();
+			btnCloseApp.MouseEnter += (s, e) => { btnCloseApp.BackColor = Color.IndianRed; btnCloseApp.ForeColor = Color.White; };
+			btnCloseApp.MouseLeave += (s, e) => { btnCloseApp.BackColor = Color.Transparent; btnCloseApp.ForeColor = Color.Black; };
+
 			btnMinimize.Click += (s, e) => this.WindowState = FormWindowState.Minimized;
+			btnMinimize.MouseEnter += (s, e) => btnMinimize.BackColor = Color.LightGray;
+			btnMinimize.MouseLeave += (s, e) => btnMinimize.BackColor = Color.Transparent;
+
 			pnlHeader.MouseDown += PnlHeader_MouseDown;
 			lblTitle.MouseDown += PnlHeader_MouseDown;
 
 			pnlBottom.Paint += PnlBottom_Paint;
 
-			// ÁTMÉRETEZÉS FRISSÍTÉS
 			this.SizeChanged += (s, e) =>
 			{
 				this.Invalidate();
@@ -86,7 +105,6 @@ namespace ChatClientGUI.Forms
 			this.FormClosing += (s, e) => _service.MessageReceived -= OnMessageReceived;
 		}
 
-		// --- KERET ÉS ÁTMÉRETEZÉS ---
 		protected override void OnPaint(PaintEventArgs e)
 		{
 			base.OnPaint(e);
@@ -122,8 +140,6 @@ namespace ChatClientGUI.Forms
 			if (txtPrivateInput.Width > 4 && txtPrivateInput.Height > 4)
 				txtPrivateInput.Region = new Region(new Rectangle(2, 2, txtPrivateInput.Width - 4, txtPrivateInput.Height - 4));
 		}
-
-		// --- LOGIKA ---
 
 		private void PnlBottom_Paint(object sender, PaintEventArgs e)
 		{
@@ -215,10 +231,8 @@ namespace ChatClientGUI.Forms
 		private async Task SendPrivate()
 		{
 			if (string.IsNullOrWhiteSpace(txtPrivateInput.Text)) return;
-
 			string msg = txtPrivateInput.Text;
 			await _service.SendPrivateMessageAsync(_targetUser, msg);
-
 			lstPrivateMessages.Items.Add($"Me: {msg}");
 			txtPrivateInput.Clear();
 			lstPrivateMessages.TopIndex = lstPrivateMessages.Items.Count - 1;
