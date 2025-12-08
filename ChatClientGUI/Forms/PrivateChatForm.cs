@@ -5,51 +5,48 @@ using ChatClientGUI.Services;
 
 namespace ChatClientGUI.Forms
 {
-    public partial class PrivateChatForm : Form
-    {
-        private ClientService _service;
-        private string _targetUser; 
+	public partial class PrivateChatForm : Form
+	{
+		private readonly ClientService _service;
+		private readonly string _targetUser;
 
-        public PrivateChatForm(ClientService service, string targetUser)
-        {
-            InitializeComponent();
-            _service = service;
-            _targetUser = targetUser;
-            this.Text = $"Privát: {_targetUser}"; 
+		public PrivateChatForm(ClientService service, string targetUser)
+		{
+			InitializeComponent();
+			_service = service;
+			_targetUser = targetUser;
+			this.Text = $"Private Chat - {_targetUser}";
 
-            _service.MessageReceived += OnMessageReceived;
-            btnSendPrivate.Click += async (s, e) => await SendPrivate();
-        }
+			_service.MessageReceived += OnMessageReceived;
+			btnSendPrivate.Click += async (s, e) => await SendPrivate();
 
-        private async Task SendPrivate()
-        {s
-            if (string.IsNullOrWhiteSpace(txtPrivateInput.Text)) return;
+			this.FormClosing += (s, e) => _service.MessageReceived -= OnMessageReceived;
+		}
 
-            string msg = txtPrivateInput.Text;
-            await _service.SendPrivateMessageAsync(_targetUser, msg);
+		private async Task SendPrivate()
+		{
+			if (string.IsNullOrWhiteSpace(txtPrivateInput.Text)) return;
 
-            lstPrivateMessages.Items.Add($"Én: {msg}");
-            txtPrivateInput.Clear();
-        }
+			string msg = txtPrivateInput.Text;
+			await _service.SendPrivateMessageAsync(_targetUser, msg);
 
-        private void OnMessageReceived(string msg)
-        {
-            if (IsDisposed) return;
+			lstPrivateMessages.Items.Add($"Me: {msg}");
+			txtPrivateInput.Clear();
+			lstPrivateMessages.TopIndex = lstPrivateMessages.Items.Count - 1;
+		}
 
-            Invoke((MethodInvoker)delegate
-            {
-                if (msg.StartsWith($"(privát) {_targetUser}:"))
-                {
-                    lstPrivateMessages.Items.Add(msg);
-                    lstPrivateMessages.TopIndex = lstPrivateMessages.Items.Count - 1;
-                }
-            });
-        }
+		private void OnMessageReceived(string msg)
+		{
+			if (IsDisposed || !IsHandleCreated) return;
 
-        protected override void OnFormClosing(FormClosingEventArgs e)
-        {
-            _service.MessageReceived -= OnMessageReceived;
-            base.OnFormClosing(e);
-        }
-    }
+			Invoke((MethodInvoker)delegate
+			{
+				if (msg.StartsWith($"(privát) {_targetUser}:") || msg.StartsWith($"(private) {_targetUser}:"))
+				{
+					lstPrivateMessages.Items.Add(msg);
+					lstPrivateMessages.TopIndex = lstPrivateMessages.Items.Count - 1;
+				}
+			});
+		}
+	}
 }
