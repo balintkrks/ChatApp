@@ -30,9 +30,8 @@
 			this.pnlCenter.SuspendLayout();
 			this.pnlHeader.SuspendLayout();
 			this.SuspendLayout();
-			// 
-			// lstPrivateMessages
-			// 
+			
+
 			this.lstPrivateMessages.BackColor = System.Drawing.Color.White;
 			this.lstPrivateMessages.BorderStyle = System.Windows.Forms.BorderStyle.None;
 			this.lstPrivateMessages.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -45,9 +44,8 @@
 			this.lstPrivateMessages.Name = "lstPrivateMessages";
 			this.lstPrivateMessages.Size = new System.Drawing.Size(564, 301);
 			this.lstPrivateMessages.TabIndex = 0;
-			// 
-			// txtPrivateInput
-			// 
+			
+
 			this.txtPrivateInput.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
 			| System.Windows.Forms.AnchorStyles.Left)
 			| System.Windows.Forms.AnchorStyles.Right)));
@@ -57,9 +55,8 @@
 			this.txtPrivateInput.Name = "txtPrivateInput";
 			this.txtPrivateInput.Size = new System.Drawing.Size(469, 30);
 			this.txtPrivateInput.TabIndex = 1;
-			// 
-			// btnSendPrivate
-			// 
+			
+
 			this.btnSendPrivate.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.btnSendPrivate.BackColor = System.Drawing.Color.DodgerBlue;
 			this.btnSendPrivate.Cursor = System.Windows.Forms.Cursors.Hand;
@@ -73,9 +70,8 @@
 			this.btnSendPrivate.TabIndex = 2;
 			this.btnSendPrivate.Text = "SEND";
 			this.btnSendPrivate.UseVisualStyleBackColor = false;
-			// 
-			// pnlBottom
-			// 
+			
+
 			this.pnlBottom.BackColor = System.Drawing.Color.Gainsboro;
 			this.pnlBottom.Controls.Add(this.txtPrivateInput);
 			this.pnlBottom.Controls.Add(this.btnSendPrivate);
@@ -84,9 +80,8 @@
 			this.pnlBottom.Name = "pnlBottom";
 			this.pnlBottom.Size = new System.Drawing.Size(584, 50);
 			this.pnlBottom.TabIndex = 3;
-			// 
-			// pnlCenter
-			// 
+			
+
 			this.pnlCenter.BackColor = System.Drawing.Color.White;
 			this.pnlCenter.Controls.Add(this.lstPrivateMessages);
 			this.pnlCenter.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -95,9 +90,8 @@
 			this.pnlCenter.Padding = new System.Windows.Forms.Padding(10);
 			this.pnlCenter.Size = new System.Drawing.Size(584, 281);
 			this.pnlCenter.TabIndex = 4;
-			// 
-			// pnlHeader
-			// 
+			
+
 			this.pnlHeader.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(246)))), ((int)(((byte)(247)))));
 			this.pnlHeader.Controls.Add(this.btnMinimize);
 			this.pnlHeader.Controls.Add(this.btnCloseApp);
@@ -107,9 +101,8 @@
 			this.pnlHeader.Name = "pnlHeader";
 			this.pnlHeader.Size = new System.Drawing.Size(584, 40);
 			this.pnlHeader.TabIndex = 5;
-			// 
-			// lblTitle
-			// 
+			
+
 			this.lblTitle.AutoSize = true;
 			this.lblTitle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
 			this.lblTitle.ForeColor = System.Drawing.Color.DimGray;
@@ -118,9 +111,8 @@
 			this.lblTitle.Size = new System.Drawing.Size(89, 19);
 			this.lblTitle.TabIndex = 0;
 			this.lblTitle.Text = "Private Chat";
-			// 
-			// btnCloseApp
-			// 
+			
+
 			this.btnCloseApp.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.btnCloseApp.Cursor = System.Windows.Forms.Cursors.Hand;
 			this.btnCloseApp.FlatAppearance.BorderSize = 0;
@@ -132,9 +124,8 @@
 			this.btnCloseApp.TabIndex = 1;
 			this.btnCloseApp.Text = "X";
 			this.btnCloseApp.UseVisualStyleBackColor = true;
-			// 
-			// btnMinimize
-			// 
+			
+
 			this.btnMinimize.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.btnMinimize.Cursor = System.Windows.Forms.Cursors.Hand;
 			this.btnMinimize.FlatAppearance.BorderSize = 0;
@@ -146,9 +137,8 @@
 			this.btnMinimize.TabIndex = 2;
 			this.btnMinimize.Text = "_";
 			this.btnMinimize.UseVisualStyleBackColor = true;
-			// 
-			// PrivateChatForm
-			// 
+			
+
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(584, 371);

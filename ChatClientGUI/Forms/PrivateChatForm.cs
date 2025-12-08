@@ -45,7 +45,7 @@ namespace ChatClientGUI.Forms
 
 			lblTitle.Text = $"Private Chat - {_targetUser}";
 
-			// Placeholder
+			
 			txtPrivateInput.Text = PLACEHOLDER;
 			txtPrivateInput.ForeColor = Color.Gray;
 			txtPrivateInput.BackColor = Color.FromArgb(245, 245, 245);
@@ -91,7 +91,7 @@ namespace ChatClientGUI.Forms
 			if (e.Index < 0 || e.Index >= lstPrivateMessages.Items.Count) return;
 			string fullMsg = lstPrivateMessages.Items[e.Index].ToString();
 
-			// Ha egyszerű üzenet "Me: hello", azt is kezeljük
+			
 			string content = fullMsg;
 			if (fullMsg.StartsWith("Me:")) content = fullMsg.Substring(3).Trim();
 
@@ -113,7 +113,7 @@ namespace ChatClientGUI.Forms
 			bool isMe = msg.StartsWith("Me:");
 			string content = isMe ? msg.Substring(3).Trim() : msg;
 
-			// Ha a bejövő üzenet formátuma "(privát) User: Msg"
+			
 			string senderName = _targetUser;
 			if (!isMe && msg.Contains(":"))
 			{
@@ -142,7 +142,7 @@ namespace ChatClientGUI.Forms
 				g.FillPath(brush, path);
 			}
 
-			// Szöveg
+			
 			TextRenderer.DrawText(g, content, new Font("Segoe UI", 10), bubbleRect, textColor, TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter | TextFormatFlags.WordBreak);
 		}
 
@@ -169,7 +169,7 @@ namespace ChatClientGUI.Forms
 			lstPrivateMessages.TopIndex = lstPrivateMessages.Items.Count - 1;
 		}
 
-		// --- EGYÉB RAJZOLÁS (Kerek gomb, alsó sáv) ---
+		
 		private void PnlBottom_Paint(object sender, PaintEventArgs e)
 		{
 			e.Graphics.SmoothingMode = SmoothingMode.HighQuality;

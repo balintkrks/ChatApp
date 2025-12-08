@@ -19,7 +19,7 @@ namespace ChatClientGUI.Forms
 
 		private readonly ClientService _service;
 
-		// ÁRNYÉK
+		
 		protected override CreateParams CreateParams
 		{
 			get
@@ -40,11 +40,11 @@ namespace ChatClientGUI.Forms
 			this.DoubleBuffered = true;
 			this.SetStyle(ControlStyles.ResizeRedraw | ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer, true);
 
-			// Gombok kerekítése
+			
 			ApplyRoundedRegion(btnLogin, 20);
 			ApplyRoundedRegion(btnRegister, 20);
 
-			// HOVER EFFEKTEK
+			
 			btnLogin.MouseEnter += (s, e) => btnLogin.BackColor = Color.FromArgb(0, 90, 180);
 			btnLogin.MouseLeave += (s, e) => btnLogin.BackColor = Color.DodgerBlue;
 
@@ -59,7 +59,7 @@ namespace ChatClientGUI.Forms
 			btnMinimize.MouseEnter += (s, e) => btnMinimize.BackColor = Color.LightGray;
 			btnMinimize.MouseLeave += (s, e) => btnMinimize.BackColor = Color.Transparent;
 
-			// Input stílus
+			
 			txtUsername.BorderStyle = BorderStyle.None;
 			txtUsername.BackColor = Color.FromArgb(245, 245, 245);
 			txtPassword.BorderStyle = BorderStyle.None;
@@ -135,7 +135,7 @@ namespace ChatClientGUI.Forms
 			return path;
 		}
 
-		// --- LOGIKA ---
+		
 		private async Task<bool> ConnectIfNeeded() { return await _service.ConnectAsync("127.0.0.1", 5000); }
 		private async Task HandleLogin() { if (!await ConnectIfNeeded()) { MessageBox.Show("Could not connect to server.", "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error); return; } string user = txtUsername.Text.Trim(); string pass = txtPassword.Text.Trim(); if (string.IsNullOrEmpty(user) || string.IsNullOrEmpty(pass)) await _service.SendLoginAnonAsync(); else await _service.SendLoginAsync(user, pass); }
 		private async Task HandleRegister() { if (!await ConnectIfNeeded()) { MessageBox.Show("Could not connect to server.", "Connection Error", MessageBoxButtons.OK, MessageBoxIcon.Error); return; } string user = txtUsername.Text.Trim(); string pass = txtPassword.Text.Trim(); if (!string.IsNullOrEmpty(user) && !string.IsNullOrEmpty(pass)) await _service.SendRegisterAsync(user, pass); else MessageBox.Show("Username and password required.", "Registration", MessageBoxButtons.OK, MessageBoxIcon.Warning); }

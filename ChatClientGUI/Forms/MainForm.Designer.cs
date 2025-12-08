@@ -35,9 +35,8 @@
 			this.pnlCenter.SuspendLayout();
 			this.pnlHeader.SuspendLayout();
 			this.SuspendLayout();
-			// 
-			// lstMessages
-			// 
+			
+
 			this.lstMessages.BackColor = System.Drawing.Color.White;
 			this.lstMessages.BorderStyle = System.Windows.Forms.BorderStyle.None;
 			this.lstMessages.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -51,9 +50,8 @@
 			this.lstMessages.SelectionMode = System.Windows.Forms.SelectionMode.None;
 			this.lstMessages.Size = new System.Drawing.Size(560, 396);
 			this.lstMessages.TabIndex = 0;
-			// 
-			// txtMessage
-			// 
+			
+
 			this.txtMessage.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
 			| System.Windows.Forms.AnchorStyles.Left)
 			| System.Windows.Forms.AnchorStyles.Right)));
@@ -63,9 +61,8 @@
 			this.txtMessage.Name = "txtMessage";
 			this.txtMessage.Size = new System.Drawing.Size(475, 25);
 			this.txtMessage.TabIndex = 1;
-			// 
-			// btnSend
-			// 
+			
+
 			this.btnSend.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.btnSend.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(120)))), ((int)(((byte)(215)))));
 			this.btnSend.Cursor = System.Windows.Forms.Cursors.Hand;
@@ -79,9 +76,8 @@
 			this.btnSend.TabIndex = 2;
 			this.btnSend.Text = "➤";
 			this.btnSend.UseVisualStyleBackColor = false;
-			// 
-			// btnFile
-			// 
+			
+
 			this.btnFile.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.btnFile.BackColor = System.Drawing.Color.WhiteSmoke;
 			this.btnFile.Cursor = System.Windows.Forms.Cursors.Hand;
@@ -95,9 +91,8 @@
 			this.btnFile.TabIndex = 3;
 			this.btnFile.Text = "📎";
 			this.btnFile.UseVisualStyleBackColor = false;
-			// 
-			// label1
-			// 
+			
+
 			this.label1.Dock = System.Windows.Forms.DockStyle.Top;
 			this.label1.Font = new System.Drawing.Font("Segoe UI", 8F, System.Drawing.FontStyle.Bold);
 			this.label1.ForeColor = System.Drawing.Color.Gray;
@@ -107,9 +102,8 @@
 			this.label1.Size = new System.Drawing.Size(160, 30);
 			this.label1.TabIndex = 4;
 			this.label1.Text = "CONTACTS";
-			// 
-			// lstUsers
-			// 
+			
+
 			this.lstUsers.BackColor = System.Drawing.Color.White;
 			this.lstUsers.BorderStyle = System.Windows.Forms.BorderStyle.None;
 			this.lstUsers.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -122,9 +116,8 @@
 			this.lstUsers.Name = "lstUsers";
 			this.lstUsers.Size = new System.Drawing.Size(160, 436);
 			this.lstUsers.TabIndex = 5;
-			// 
-			// pnlBottom
-			// 
+			
+
 			this.pnlBottom.BackColor = System.Drawing.Color.White;
 			this.pnlBottom.Controls.Add(this.txtMessage);
 			this.pnlBottom.Controls.Add(this.btnSend);
@@ -134,9 +127,8 @@
 			this.pnlBottom.Name = "pnlBottom";
 			this.pnlBottom.Size = new System.Drawing.Size(640, 50);
 			this.pnlBottom.TabIndex = 7;
-			// 
-			// pnlRight
-			// 
+			
+
 			this.pnlRight.BackColor = System.Drawing.Color.White;
 			this.pnlRight.Controls.Add(this.lstUsers);
 			this.pnlRight.Controls.Add(this.label1);
@@ -145,9 +137,8 @@
 			this.pnlRight.Name = "pnlRight";
 			this.pnlRight.Size = new System.Drawing.Size(160, 466);
 			this.pnlRight.TabIndex = 8;
-			// 
-			// pnlCenter
-			// 
+			
+
 			this.pnlCenter.BackColor = System.Drawing.Color.White;
 			this.pnlCenter.Controls.Add(this.lstMessages);
 			this.pnlCenter.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -156,9 +147,8 @@
 			this.pnlCenter.Padding = new System.Windows.Forms.Padding(10);
 			this.pnlCenter.Size = new System.Drawing.Size(640, 376);
 			this.pnlCenter.TabIndex = 9;
-			// 
-			// pnlHeader
-			// 
+			
+
 			this.pnlHeader.BackColor = System.Drawing.Color.WhiteSmoke;
 			this.pnlHeader.Controls.Add(this.btnMinimize);
 			this.pnlHeader.Controls.Add(this.btnCloseApp);
@@ -168,9 +158,8 @@
 			this.pnlHeader.Name = "pnlHeader";
 			this.pnlHeader.Size = new System.Drawing.Size(800, 40);
 			this.pnlHeader.TabIndex = 10;
-			// 
-			// lblTitle
-			// 
+			
+
 			this.lblTitle.AutoSize = true;
 			this.lblTitle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
 			this.lblTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
@@ -179,9 +168,8 @@
 			this.lblTitle.Size = new System.Drawing.Size(69, 19);
 			this.lblTitle.TabIndex = 0;
 			this.lblTitle.Text = "ChatApp";
-			// 
-			// btnCloseApp
-			// 
+			
+
 			this.btnCloseApp.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.btnCloseApp.Cursor = System.Windows.Forms.Cursors.Hand;
 			this.btnCloseApp.FlatAppearance.BorderSize = 0;
@@ -194,9 +182,8 @@
 			this.btnCloseApp.TabIndex = 1;
 			this.btnCloseApp.Text = "✕";
 			this.btnCloseApp.UseVisualStyleBackColor = true;
-			// 
-			// btnMinimize
-			// 
+			
+
 			this.btnMinimize.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.btnMinimize.Cursor = System.Windows.Forms.Cursors.Hand;
 			this.btnMinimize.FlatAppearance.BorderSize = 0;
@@ -208,9 +195,8 @@
 			this.btnMinimize.TabIndex = 2;
 			this.btnMinimize.Text = "−";
 			this.btnMinimize.UseVisualStyleBackColor = true;
-			// 
-			// MainForm
-			// 
+			
+
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(800, 506);

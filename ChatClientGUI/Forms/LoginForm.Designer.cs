@@ -29,26 +29,20 @@
 			this.lblTitle = new System.Windows.Forms.Label();
 			this.pnlHeader.SuspendLayout();
 			this.SuspendLayout();
-			// 
-			// txtUsername
-			// 
+			
 			this.txtUsername.Font = new System.Drawing.Font("Segoe UI", 11F);
 			this.txtUsername.Location = new System.Drawing.Point(50, 80);
 			this.txtUsername.Name = "txtUsername";
 			this.txtUsername.Size = new System.Drawing.Size(250, 27);
 			this.txtUsername.TabIndex = 0;
-			// 
-			// txtPassword
-			// 
+			
 			this.txtPassword.Font = new System.Drawing.Font("Segoe UI", 11F);
 			this.txtPassword.Location = new System.Drawing.Point(50, 150);
 			this.txtPassword.Name = "txtPassword";
 			this.txtPassword.PasswordChar = '•';
 			this.txtPassword.Size = new System.Drawing.Size(250, 27);
 			this.txtPassword.TabIndex = 1;
-			// 
-			// btnLogin
-			// 
+			
 			this.btnLogin.BackColor = System.Drawing.Color.DodgerBlue;
 			this.btnLogin.Cursor = System.Windows.Forms.Cursors.Hand;
 			this.btnLogin.FlatAppearance.BorderSize = 0;
@@ -61,9 +55,7 @@
 			this.btnLogin.TabIndex = 2;
 			this.btnLogin.Text = "Login";
 			this.btnLogin.UseVisualStyleBackColor = false;
-			// 
-			// btnRegister
-			// 
+			
 			this.btnRegister.BackColor = System.Drawing.Color.Gray;
 			this.btnRegister.Cursor = System.Windows.Forms.Cursors.Hand;
 			this.btnRegister.FlatAppearance.BorderSize = 0;
@@ -76,9 +68,7 @@
 			this.btnRegister.TabIndex = 3;
 			this.btnRegister.Text = "Register";
 			this.btnRegister.UseVisualStyleBackColor = false;
-			// 
-			// lblUser
-			// 
+			
 			this.lblUser.AutoSize = true;
 			this.lblUser.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
 			this.lblUser.ForeColor = System.Drawing.Color.Gray;
@@ -87,9 +77,7 @@
 			this.lblUser.Size = new System.Drawing.Size(64, 15);
 			this.lblUser.TabIndex = 4;
 			this.lblUser.Text = "Username";
-			// 
-			// lblPass
-			// 
+			
 			this.lblPass.AutoSize = true;
 			this.lblPass.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
 			this.lblPass.ForeColor = System.Drawing.Color.Gray;
@@ -98,9 +86,7 @@
 			this.lblPass.Size = new System.Drawing.Size(59, 15);
 			this.lblPass.TabIndex = 5;
 			this.lblPass.Text = "Password";
-			// 
-			// pnlHeader
-			// 
+			
 			this.pnlHeader.BackColor = System.Drawing.Color.WhiteSmoke;
 			this.pnlHeader.Controls.Add(this.btnMinimize);
 			this.pnlHeader.Controls.Add(this.btnClose);
@@ -110,9 +96,7 @@
 			this.pnlHeader.Name = "pnlHeader";
 			this.pnlHeader.Size = new System.Drawing.Size(350, 40);
 			this.pnlHeader.TabIndex = 6;
-			// 
-			// btnMinimize
-			// 
+			
 			this.btnMinimize.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.btnMinimize.Cursor = System.Windows.Forms.Cursors.Hand;
 			this.btnMinimize.FlatAppearance.BorderSize = 0;
@@ -124,9 +108,7 @@
 			this.btnMinimize.TabIndex = 2;
 			this.btnMinimize.Text = "−";
 			this.btnMinimize.UseVisualStyleBackColor = true;
-			// 
-			// btnClose
-			// 
+			
 			this.btnClose.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.btnClose.Cursor = System.Windows.Forms.Cursors.Hand;
 			this.btnClose.FlatAppearance.BorderSize = 0;
@@ -139,9 +121,7 @@
 			this.btnClose.TabIndex = 1;
 			this.btnClose.Text = "✕";
 			this.btnClose.UseVisualStyleBackColor = true;
-			// 
-			// lblTitle
-			// 
+			
 			this.lblTitle.AutoSize = true;
 			this.lblTitle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
 			this.lblTitle.ForeColor = System.Drawing.Color.DimGray;
@@ -150,9 +130,7 @@
 			this.lblTitle.Size = new System.Drawing.Size(46, 19);
 			this.lblTitle.TabIndex = 0;
 			this.lblTitle.Text = "Login";
-			// 
-			// LoginForm
-			// 
+			
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.BackColor = System.Drawing.Color.White;
