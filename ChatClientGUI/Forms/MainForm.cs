@@ -45,10 +45,10 @@ namespace ChatClientGUI.Forms
 
 			lblTitle.Text = $"ChatApp - {_myUsername}";
 
-			// KEZDETI FORMÁZÁS
+			// KEZDETI FORMÁZÁS (Kör alakú gombok)
 			UpdateControlRegions();
 
-			// INPUT MEZŐ
+			// INPUT MEZŐ ALAP STÍLUS
 			txtMessage.BackColor = Color.FromArgb(245, 245, 245);
 			txtMessage.BorderStyle = BorderStyle.None;
 
@@ -140,7 +140,7 @@ namespace ChatClientGUI.Forms
 
 		private void UpdateControlRegions()
 		{
-			// KÖR ALAKÚ GOMBOK (Width == Height legyen a Designerben!)
+			// KÖR ALAKÚ GOMBOK
 			ApplyCircleRegion(btnSend);
 			ApplyCircleRegion(btnFile);
 
@@ -152,7 +152,7 @@ namespace ChatClientGUI.Forms
 		{
 			e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
-			// Textbox háttér ("Pill" alak)
+			// Textbox háttér ("Pill" alak) - letisztult szürke
 			Rectangle rect = new Rectangle(txtMessage.Location.X - 15, txtMessage.Location.Y - 8, txtMessage.Width + 30, txtMessage.Height + 16);
 			using (GraphicsPath path = GetRoundedPath(rect, 18))
 			using (var brush = new SolidBrush(Color.FromArgb(245, 245, 245)))
@@ -176,7 +176,7 @@ namespace ChatClientGUI.Forms
 			SendMessage(this.Handle, 0x112, 0xf012, 0);
 		}
 
-		// --- RAJZOLÓ LOGIKA (Változatlan, de Font javítva) ---
+		// --- RAJZOLÓ LOGIKA ---
 		private void LstUsers_DrawItem(object sender, DrawItemEventArgs e)
 		{
 			if (e.Index < 0) return;
@@ -234,7 +234,6 @@ namespace ChatClientGUI.Forms
 			}
 			else
 			{
-				// Letisztultabb színek
 				Color bubbleColor = isMe ? Color.FromArgb(0, 132, 255) : Color.FromArgb(240, 240, 240);
 				Color textColor = isMe ? Color.White : Color.Black;
 
@@ -273,7 +272,7 @@ namespace ChatClientGUI.Forms
 
 		private bool IsMyMessage(string msg) => msg.Contains($" {_myUsername}:") || msg.Contains($"[Private ->");
 
-		// --- EGYÉB SEGÉDFÜGGVÉNYEK ---
+		// --- SEGÉDFÜGGVÉNYEK ---
 		private void HandleUserSelection(string selection)
 		{
 			if (selection == "[Global Chat]") { _currentChatPartner = null; lblTitle.Text = $"ChatApp - {_myUsername} (Global)"; }
