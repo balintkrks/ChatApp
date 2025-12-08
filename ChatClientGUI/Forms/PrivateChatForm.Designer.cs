@@ -110,6 +110,7 @@
 
 		#endregion
 
+		// DEKLARÁCIÓK - csak itt szerepelhetnek!
 		private System.Windows.Forms.ListBox lstPrivateMessages;
 		private System.Windows.Forms.TextBox txtPrivateInput;
 		private System.Windows.Forms.Button btnSendPrivate;
