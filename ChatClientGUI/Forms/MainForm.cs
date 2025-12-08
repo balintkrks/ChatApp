@@ -28,18 +28,11 @@ namespace ChatClientGUI.Forms
 		private string _currentChatPartner = null;
 		private readonly List<string> _allMessages = new List<string>();
 		private readonly Dictionary<string, (string FileName, byte[] Content)> _pendingFiles = new Dictionary<string, (string, byte[])>();
-
-		// Placeholder szöveg
 		private const string PLACEHOLDER = "Írj egy üzenetet...";
 
 		protected override CreateParams CreateParams
 		{
-			get
-			{
-				CreateParams cp = base.CreateParams;
-				cp.ClassStyle |= CS_DROPSHADOW;
-				return cp;
-			}
+			get { CreateParams cp = base.CreateParams; cp.ClassStyle |= CS_DROPSHADOW; return cp; }
 		}
 
 		public MainForm(ClientService service, string myName)
@@ -53,7 +46,7 @@ namespace ChatClientGUI.Forms
 
 			lblTitle.Text = $"ChatApp - {_myUsername}";
 
-			// Placeholder beállítás
+			// Placeholder
 			txtMessage.Text = PLACEHOLDER;
 			txtMessage.ForeColor = Color.Gray;
 			txtMessage.BackColor = Color.FromArgb(245, 245, 245);
@@ -72,22 +65,9 @@ namespace ChatClientGUI.Forms
 			btnMinimize.Click += (s, e) => this.WindowState = FormWindowState.Minimized;
 
 			// Placeholder logika
-			txtMessage.Enter += (s, e) => {
-				if (txtMessage.Text == PLACEHOLDER)
-				{
-					txtMessage.Text = "";
-					txtMessage.ForeColor = Color.Black;
-				}
-			};
-			txtMessage.Leave += (s, e) => {
-				if (string.IsNullOrWhiteSpace(txtMessage.Text))
-				{
-					txtMessage.Text = PLACEHOLDER;
-					txtMessage.ForeColor = Color.Gray;
-				}
-			};
+			txtMessage.Enter += (s, e) => { if (txtMessage.Text == PLACEHOLDER) { txtMessage.Text = ""; txtMessage.ForeColor = Color.Black; } };
+			txtMessage.Leave += (s, e) => { if (string.IsNullOrWhiteSpace(txtMessage.Text)) { txtMessage.Text = PLACEHOLDER; txtMessage.ForeColor = Color.Gray; } };
 
-			// Enter küldés
 			txtMessage.KeyDown += async (s, e) =>
 			{
 				if (e.KeyCode == Keys.Enter && !e.Shift)
@@ -97,21 +77,17 @@ namespace ChatClientGUI.Forms
 				}
 			};
 
-			// Rajzolás
 			pnlBottom.Paint += PnlBottom_Paint;
 			lstMessages.MeasureItem += LstMessages_MeasureItem;
 			lstMessages.DrawItem += LstMessages_DrawItem;
 			lstUsers.DrawItem += LstUsers_DrawItem;
 
-			// Fejléc mozgatás
 			pnlHeader.MouseDown += (s, e) => { ReleaseCapture(); SendMessage(this.Handle, 0x112, 0xf012, 0); };
 			lblTitle.MouseDown += (s, e) => { ReleaseCapture(); SendMessage(this.Handle, 0x112, 0xf012, 0); };
 
-			// Ablak átméretezés
 			this.SizeChanged += (s, e) => { this.Invalidate(); UpdateControlRegions(); pnlBottom.Invalidate(); };
 			txtMessage.SizeChanged += (s, e) => { if (txtMessage.Width > 0 && txtMessage.Height > 0) txtMessage.Region = new Region(new Rectangle(2, 2, txtMessage.Width - 4, txtMessage.Height - 4)); };
 
-			// Listák
 			lstMessages.DoubleClick += (s, e) => { if (lstMessages.SelectedItem != null) HandleFileDownload(lstMessages.SelectedItem.ToString()); };
 			lstUsers.SelectedIndexChanged += (s, e) => { if (lstUsers.SelectedItem != null) HandleUserSelection(lstUsers.SelectedItem.ToString()); };
 
@@ -119,38 +95,66 @@ namespace ChatClientGUI.Forms
 			lstUsers.SelectedIndex = 0;
 		}
 
-		// --- OKOS BUBORÉK MÉRÉS ---
+		// --- ÜZENET PARSOLÁS (JAVÍTVA) ---
+		private (string Time, string Name, string Content) ParseMessage(string raw)
+		{
+			// Formátum: "13:29 Anon_d8f5: helosztij!" vagy "Me: sziia"
+			try
+			{
+				// Ha "Me:"-vel kezdődik (saját üzenet, amit mi adtunk hozzá)
+				if (raw.StartsWith("Me:") || (raw.Contains("Me:") && !raw.Contains(": Me:")))
+				{
+					// Saját üzenetnél nincs időbélyeg a raw string elején, hacsak nem mi raktuk oda
+					// A jelenlegi kódban: $"{DateTime.Now:HH:mm} Me: {text}"
+					var parts = raw.Split(new[] { ' ' }, 2);
+					if (parts.Length == 2 && parts[0].Contains(":")) // Idő van az elején
+					{
+						// parts[0] = idő, parts[1] = "Me: üzenet"
+						var contentPart = parts[1].Substring(3).Trim(); // Levágjuk a "Me:"-t
+						return (parts[0], "Me", contentPart);
+					}
+				}
+
+				// Ha normál bejövő üzenet: "Idő Név: Üzenet"
+				var firstSpaceIndex = raw.IndexOf(' ');
+				if (firstSpaceIndex > 0)
+				{
+					string time = raw.Substring(0, firstSpaceIndex);
+					string rest = raw.Substring(firstSpaceIndex + 1);
+
+					var colonIndex = rest.IndexOf(':');
+					if (colonIndex > 0)
+					{
+						string name = rest.Substring(0, colonIndex);
+						string content = rest.Substring(colonIndex + 1).Trim();
+						return (time, name, content);
+					}
+				}
+			}
+			catch { }
+
+			// Ha nem sikerült parsolni, visszaadjuk nyersen
+			return ("", "", raw);
+		}
+
+		// --- RAJZOLÁS ---
 		private void LstMessages_MeasureItem(object sender, MeasureItemEventArgs e)
 		{
 			if (e.Index < 0 || e.Index >= lstMessages.Items.Count) return;
-
 			string fullMsg = lstMessages.Items[e.Index].ToString();
 
-			// Ha rendszerüzenet
-			if (fullMsg.Contains("FILE") || fullMsg.Contains("System") || fullMsg.Contains("Server"))
-			{
-				e.ItemHeight = 40;
-				return;
-			}
+			if (fullMsg.Contains("FILE") || fullMsg.Contains("System") || fullMsg.Contains("Server")) { e.ItemHeight = 40; return; }
 
-			// Próbáljuk szétszedni: "HH:mm Név: Üzenet"
 			var parts = ParseMessage(fullMsg);
-			string content = parts.Content;
-
 			int maxWidth = (int)(lstMessages.Width * 0.7);
-
-			// Fejléc (Név + Idő) magassága kb 20px
-			// Üzenet szöveg mérése
-			Size size = TextRenderer.MeasureText(e.Graphics, content, new Font("Segoe UI", 10), new Size(maxWidth, 0), TextFormatFlags.WordBreak);
-
-			e.ItemHeight = size.Height + 45; // + fejléc + margók
+			Size size = TextRenderer.MeasureText(e.Graphics, parts.Content, new Font("Segoe UI", 10), new Size(maxWidth, 0), TextFormatFlags.WordBreak);
+			e.ItemHeight = size.Height + 45;
 		}
 
-		// --- OKOS BUBORÉK RAJZOLÁS ---
 		private void LstMessages_DrawItem(object sender, DrawItemEventArgs e)
 		{
 			if (e.Index < 0) return;
-			e.Graphics.FillRectangle(Brushes.White, e.Bounds);
+			e.Graphics.FillRectangle(Brushes.White, e.Bounds); // Fehér háttér a lista mögé
 
 			string fullMsg = lstMessages.Items[e.Index].ToString();
 			Graphics g = e.Graphics;
@@ -164,138 +168,62 @@ namespace ChatClientGUI.Forms
 				return;
 			}
 
-			// Normál üzenet bontása
 			var parsed = ParseMessage(fullMsg);
-			bool isMe = parsed.Name == _myUsername || parsed.Name == "Me" || fullMsg.Contains("[Private ->");
+			bool isMe = parsed.Name == "Me" || parsed.Name == _myUsername;
 
-			// Buborék színek
-			Color bubbleColor = isMe ? Color.FromArgb(220, 248, 198) : Color.FromArgb(240, 240, 240); // WhatsApp-szerű zöldes a sajátnak
-			if (isMe) bubbleColor = Color.FromArgb(0, 132, 255); // Vagy maradjunk a kéknél
+			// Színek
+			Color bubbleColor = isMe ? Color.FromArgb(0, 132, 255) : Color.FromArgb(240, 240, 240);
 			Color textColor = isMe ? Color.White : Color.Black;
-			Color timeColor = isMe ? Color.FromArgb(200, 200, 200) : Color.Gray;
+			Color metaColor = isMe ? Color.FromArgb(220, 220, 220) : Color.Gray;
 
 			// Méretek
 			int maxWidth = (int)(lstMessages.Width * 0.7);
 			Size contentSize = TextRenderer.MeasureText(g, parsed.Content, new System.Drawing.Font("Segoe UI", 10), new Size(maxWidth, 0), TextFormatFlags.WordBreak);
 
-			int bubbleWidth = Math.Max(contentSize.Width + 20, 100); // Minimum szélesség
-			int bubbleHeight = contentSize.Height + 35; // Hely a névnek és időnek
+			int bubbleWidth = Math.Max(contentSize.Width + 20, 120);
+			int bubbleHeight = contentSize.Height + 35;
 
-			// Pozíció
 			Rectangle bubbleRect;
 			if (isMe)
-				bubbleRect = new Rectangle(e.Bounds.Right - bubbleWidth - 15, e.Bounds.Top + 5, bubbleWidth, bubbleHeight);
+				bubbleRect = new Rectangle(e.Bounds.Right - bubbleWidth - 25, e.Bounds.Top + 5, bubbleWidth, bubbleHeight);
 			else
 				bubbleRect = new Rectangle(e.Bounds.Left + 15, e.Bounds.Top + 5, bubbleWidth, bubbleHeight);
 
-			// Buborék rajzolása
+			// Buborék
 			using (GraphicsPath path = GetRoundedPath(bubbleRect, 12))
 			using (var brush = new SolidBrush(bubbleColor))
 			{
 				g.FillPath(brush, path);
 			}
 
-			// TARTALOM RAJZOLÁSA A BUBORÉKBA
-			// 1. Név (Bal felül)
-			if (!isMe)
-			{
-				TextRenderer.DrawText(g, parsed.Name, new System.Drawing.Font("Segoe UI", 9, FontStyle.Bold),
-					new Point(bubbleRect.Left + 10, bubbleRect.Top + 5),
-					GetUserColor(parsed.Name));
-			}
+			// TARTALOM RAJZOLÁSA (JAVÍTOTT POZÍCIÓK)
 
-			// 2. Idő (Jobb felül)
-			Size timeSize = TextRenderer.MeasureText(g, parsed.Time, new System.Drawing.Font("Segoe UI", 7));
-			TextRenderer.DrawText(g, parsed.Time, new System.Drawing.Font("Segoe UI", 7),
-				new Point(bubbleRect.Right - timeSize.Width - 8, bubbleRect.Top + 5),
-				timeColor);
+			// 1. Név
+			int paddingX = 12;
+			int paddingY = 8;
+			Font nameFont = new System.Drawing.Font("Segoe UI", 9, FontStyle.Bold);
+			Size nameSize = TextRenderer.MeasureText(g, parsed.Name, nameFont);
 
-			// 3. Üzenet (Alatta)
-			Rectangle textRect = new Rectangle(bubbleRect.Left + 10, bubbleRect.Top + 22, bubbleRect.Width - 20, bubbleRect.Height - 25);
+			Point namePos = new Point(bubbleRect.Left + paddingX, bubbleRect.Top + paddingY);
+			TextRenderer.DrawText(g, parsed.Name, nameFont, namePos, isMe ? Color.White : GetUserColor(parsed.Name));
+
+			// 2. Idő (Közvetlenül a név után + 8px) -> ÍGY NEM ÜTKÖZIK
+			Point timePos = new Point(namePos.X + nameSize.Width + 8, namePos.Y + 2); // Kicsit lejjebb igazítva
+			TextRenderer.DrawText(g, parsed.Time, new System.Drawing.Font("Segoe UI", 8), timePos, metaColor);
+
+			// 3. Üzenet
+			Rectangle textRect = new Rectangle(bubbleRect.Left + paddingX, bubbleRect.Top + 25, bubbleRect.Width - (paddingX * 2), bubbleRect.Height - 30);
 			TextRenderer.DrawText(g, parsed.Content, new System.Drawing.Font("Segoe UI", 10),
 				textRect, textColor, TextFormatFlags.Left | TextFormatFlags.Top | TextFormatFlags.WordBreak);
 		}
 
-		// --- AVATÁROS USER LISTA ---
-		private void LstUsers_DrawItem(object sender, DrawItemEventArgs e)
-		{
-			if (e.Index < 0) return;
-
-			// Háttér
-			if ((e.State & DrawItemState.Selected) == DrawItemState.Selected)
-				e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(230, 240, 255)), e.Bounds);
-			else
-				e.Graphics.FillRectangle(Brushes.White, e.Bounds);
-
-			string userName = lstUsers.Items[e.Index].ToString();
-			Graphics g = e.Graphics;
-			g.SmoothingMode = SmoothingMode.AntiAlias;
-			g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-
-			// AVATÁR KÖR
-			int avatarSize = 24;
-			int avatarX = e.Bounds.Left + 10;
-			int avatarY = e.Bounds.Top + (e.Bounds.Height - avatarSize) / 2;
-
-			// Egyedi szín a név alapján
-			Color avatarColor = (userName == "[Global Chat]") ? Color.DodgerBlue : GetUserColor(userName);
-
-			using (var brush = new SolidBrush(avatarColor))
-			{
-				g.FillEllipse(brush, avatarX, avatarY, avatarSize, avatarSize);
-			}
-
-			// Kezdőbetű az avatárba
-			string initial = (userName.Length > 0 && userName != "[Global Chat]") ? userName.Substring(0, 1).ToUpper() : "#";
-			if (userName == "[Global Chat]") initial = "G";
-
-			TextRenderer.DrawText(g, initial, new System.Drawing.Font("Segoe UI", 9, FontStyle.Bold),
-				new Rectangle(avatarX, avatarY, avatarSize, avatarSize),
-				Color.White, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
-
-			// Név
-			Color textColor = Color.FromArgb(50, 50, 50);
-			System.Drawing.Font font = (userName == "[Global Chat]") ? new System.Drawing.Font("Segoe UI", 10, FontStyle.Bold) : new System.Drawing.Font("Segoe UI", 10);
-
-			int textX = avatarX + avatarSize + 10;
-			Rectangle textRect = new Rectangle(textX, e.Bounds.Top, e.Bounds.Width - textX, e.Bounds.Height);
-
-			TextRenderer.DrawText(g, userName, font, textRect, textColor, TextFormatFlags.VerticalCenter | TextFormatFlags.Left);
-		}
-
-		// --- SEGÉDFÜGGVÉNYEK ---
-
-		// Szín generálása név alapján (hogy mindig ugyanaz legyen az adott usernek)
 		private Color GetUserColor(string username)
 		{
 			int hash = Math.Abs(username.GetHashCode());
-			// Pasztell színek generálása
-			int r = (hash % 100) + 100; // 100-200
-			int g = ((hash / 100) % 100) + 100;
-			int b = ((hash / 10000) % 100) + 100;
-			// Kicsit sötétítünk rajta, hogy fehér alapon jól látsszon
+			int r = (hash % 120) + 50;
+			int g = ((hash / 100) % 120) + 50;
+			int b = ((hash / 10000) % 120) + 50;
 			return Color.FromArgb(r, g, b);
-		}
-
-		private (string Time, string Name, string Content) ParseMessage(string raw)
-		{
-			// Formátum feltételezés: "HH:mm Név: Üzenet"
-			// Ha nem illeszkedik, visszaadjuk az egészet tartalomnak
-			try
-			{
-				var parts = raw.Split(new[] { ' ' }, 2);
-				string time = parts[0];
-				if (time.Contains(":"))
-				{
-					var rest = parts[1].Split(new[] { ':' }, 2);
-					if (rest.Length == 2)
-					{
-						return (time, rest[0], rest[1].Trim());
-					}
-				}
-			}
-			catch { }
-			return ("", "", raw);
 		}
 
 		private GraphicsPath GetRoundedPath(Rectangle rect, int radius)
@@ -310,6 +238,31 @@ namespace ChatClientGUI.Forms
 			return path;
 		}
 
+		// --- USER LISTA ---
+		private void LstUsers_DrawItem(object sender, DrawItemEventArgs e)
+		{
+			if (e.Index < 0) return;
+			e.DrawBackground();
+			if ((e.State & DrawItemState.Selected) == DrawItemState.Selected) e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(235, 245, 255)), e.Bounds);
+			else e.Graphics.FillRectangle(Brushes.White, e.Bounds);
+
+			string userName = lstUsers.Items[e.Index].ToString();
+			Graphics g = e.Graphics;
+			g.SmoothingMode = SmoothingMode.AntiAlias;
+			g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+
+			int dotSize = 8;
+			int dotX = e.Bounds.Left + 15;
+			int dotY = e.Bounds.Top + (e.Bounds.Height - dotSize) / 2;
+			Color dotColor = (userName == "[Global Chat]") ? Color.DodgerBlue : Color.LimeGreen;
+
+			using (var brush = new SolidBrush(dotColor)) g.FillEllipse(brush, dotX, dotY, dotSize, dotSize);
+
+			Color textColor = Color.FromArgb(50, 50, 50);
+			System.Drawing.Font font = (userName == "[Global Chat]") ? new System.Drawing.Font("Segoe UI", 9F, FontStyle.Bold) : new System.Drawing.Font("Segoe UI", 9F);
+			TextRenderer.DrawText(g, userName, font, new Rectangle(dotX + 20, e.Bounds.Top, e.Bounds.Width - 30, e.Bounds.Height), textColor, TextFormatFlags.VerticalCenter | TextFormatFlags.Left);
+		}
+
 		private void PnlBottom_Paint(object sender, PaintEventArgs e)
 		{
 			e.Graphics.SmoothingMode = SmoothingMode.HighQuality;
@@ -322,26 +275,10 @@ namespace ChatClientGUI.Forms
 		{
 			using (GraphicsPath path = new GraphicsPath()) { path.AddEllipse(0, 0, btnSend.Width, btnSend.Height); btnSend.Region = new Region(path); }
 			using (GraphicsPath path = new GraphicsPath()) { path.AddEllipse(0, 0, btnFile.Width, btnFile.Height); btnFile.Region = new Region(path); }
-			if (txtMessage.Width > 0 && txtMessage.Height > 0) txtMessage.Region = new Region(new Rectangle(2, 2, txtMessage.Width - 4, txtMessage.Height - 4));
+			if (txtMessage.Width > 0) txtMessage.Region = new Region(new Rectangle(2, 2, txtMessage.Width - 4, txtMessage.Height - 4));
 		}
 
-		protected override void OnPaint(PaintEventArgs e)
-		{
-			e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-			using (Pen pen = new Pen(Color.LightGray, 1)) { e.Graphics.DrawRectangle(pen, 0, 0, this.Width - 1, this.Height - 1); }
-		}
-
-		protected override void WndProc(ref Message m)
-		{
-			base.WndProc(ref m);
-			if (m.Msg == WM_NCHITTEST && (int)m.Result == HTCLIENT)
-			{
-				Point cursor = this.PointToClient(Cursor.Position);
-				if (cursor.X >= this.ClientSize.Width - 10 && cursor.Y >= this.ClientSize.Height - 10) m.Result = (IntPtr)HTBOTTOMRIGHT;
-			}
-		}
-
-		// Logika maradéka...
+		protected override void OnPaint(PaintEventArgs e) { e.Graphics.SmoothingMode = SmoothingMode.AntiAlias; using (Pen pen = new Pen(Color.LightGray, 1)) { e.Graphics.DrawRectangle(pen, 0, 0, this.Width - 1, this.Height - 1); } }
 		private bool IsMyMessage(string msg) => msg.Contains($" {_myUsername}:") || msg.Contains($"[Private ->");
 		private void HandleUserSelection(string selection) { if (selection == "[Global Chat]") { _currentChatPartner = null; lblTitle.Text = $"ChatApp - {_myUsername} (Global)"; } else { _currentChatPartner = selection; lblTitle.Text = $"ChatApp - {_myUsername} -> {_currentChatPartner}"; } RefreshChatView(); }
 		private void OnUserListReceived(string[] users) { if (IsDisposed || !IsHandleCreated) return; Invoke((MethodInvoker)delegate { var currentSelection = lstUsers.SelectedItem; lstUsers.Items.Clear(); lstUsers.Items.Add("[Global Chat]"); foreach (var user in users) if (user != _myUsername) lstUsers.Items.Add(user); if (currentSelection != null && lstUsers.Items.Contains(currentSelection)) lstUsers.SelectedItem = currentSelection; }); }

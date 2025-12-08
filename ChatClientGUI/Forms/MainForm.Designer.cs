@@ -233,7 +233,6 @@
 
 		#endregion
 
-		// DEKLARÁCIÓK - Csak itt!
 		private System.Windows.Forms.ListBox lstMessages;
 		private System.Windows.Forms.TextBox txtMessage;
 		private System.Windows.Forms.Button btnSend;
