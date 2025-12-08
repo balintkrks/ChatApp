@@ -35,7 +35,7 @@
 			this.lstPrivateMessages.Font = new System.Drawing.Font("Segoe UI", 10F);
 			this.lstPrivateMessages.FormattingEnabled = true;
 			this.lstPrivateMessages.IntegralHeight = false;
-			this.lstPrivateMessages.ItemHeight = 30;
+			this.lstPrivateMessages.ItemHeight = 35;
 			this.lstPrivateMessages.Location = new System.Drawing.Point(10, 10);
 			this.lstPrivateMessages.Name = "lstPrivateMessages";
 			this.lstPrivateMessages.Size = new System.Drawing.Size(564, 301);
@@ -110,7 +110,7 @@
 
 		#endregion
 
-		// CSAK ITT vannak definiálva a gombok!
+		// DEKLARÁCIÓK - csak itt szerepelhetnek!
 		private System.Windows.Forms.ListBox lstPrivateMessages;
 		private System.Windows.Forms.TextBox txtPrivateInput;
 		private System.Windows.Forms.Button btnSendPrivate;

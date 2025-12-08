@@ -30,7 +30,7 @@ namespace ChatClientGUI.Forms
 
 		private void LstPrivateMessages_MeasureItem(object sender, MeasureItemEventArgs e)
 		{
-			e.ItemHeight = 30;
+			e.ItemHeight = 35;
 		}
 
 		private void LstPrivateMessages_DrawItem(object sender, DrawItemEventArgs e)
@@ -44,26 +44,41 @@ namespace ChatClientGUI.Forms
 
 			bool isMe = msg.StartsWith("Me:");
 
-			Color bubbleColor = isMe ? Color.DodgerBlue : Color.LightGray;
+			Color bubbleColor = isMe ? Color.FromArgb(0, 120, 215) : Color.FromArgb(230, 230, 230);
 			Color textColor = isMe ? Color.White : Color.Black;
 
 			var size = TextRenderer.MeasureText(g, msg, e.Font);
-			int padding = 6;
+			int padding = 10;
 			int bubbleWidth = size.Width + 2 * padding;
 			int bubbleHeight = e.Bounds.Height - 6;
 
 			Rectangle bubbleRect;
 			if (isMe)
-				bubbleRect = new Rectangle(e.Bounds.Right - bubbleWidth - 5, e.Bounds.Top + 3, bubbleWidth, bubbleHeight);
+				bubbleRect = new Rectangle(e.Bounds.Right - bubbleWidth - 10, e.Bounds.Top + 3, bubbleWidth, bubbleHeight);
 			else
-				bubbleRect = new Rectangle(e.Bounds.Left + 5, e.Bounds.Top + 3, bubbleWidth, bubbleHeight);
+				bubbleRect = new Rectangle(e.Bounds.Left + 10, e.Bounds.Top + 3, bubbleWidth, bubbleHeight);
 
+			using (GraphicsPath path = GetRoundedPath(bubbleRect, 10))
 			using (var brush = new SolidBrush(bubbleColor))
-				g.FillRectangle(brush, bubbleRect);
+			{
+				g.FillPath(brush, path);
+			}
 
 			TextRenderer.DrawText(g, msg, e.Font, bubbleRect, textColor, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
 
 			e.DrawFocusRectangle();
+		}
+
+		private GraphicsPath GetRoundedPath(Rectangle rect, int radius)
+		{
+			GraphicsPath path = new GraphicsPath();
+			int d = radius * 2;
+			path.AddArc(rect.X, rect.Y, d, d, 180, 90);
+			path.AddArc(rect.Right - d, rect.Y, d, d, 270, 90);
+			path.AddArc(rect.Right - d, rect.Bottom - d, d, d, 0, 90);
+			path.AddArc(rect.X, rect.Bottom - d, d, d, 90, 90);
+			path.CloseFigure();
+			return path;
 		}
 
 		private async Task SendPrivate()
