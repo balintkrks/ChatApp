@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.IO;
+using System.Reflection.PortableExecutable;
+using System.Runtime.InteropServices; // Kell az ablak mozgatásához
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using ChatClientGUI.Services;
@@ -11,6 +12,12 @@ namespace ChatClientGUI.Forms
 {
 	public partial class MainForm : Form
 	{
+		// --- ABLAK MOZGATÁS (WinAPI) ---
+		[DllImport("user32.dll", EntryPoint = "ReleaseCapture")]
+		private extern static void ReleaseCapture();
+		[DllImport("user32.dll", EntryPoint = "SendMessage")]
+		private extern static void SendMessage(System.IntPtr hwnd, int wmsg, int wparam, int lparam);
+
 		private readonly ClientService _service;
 		private readonly string _myUsername;
 		private string _currentChatPartner = null;
@@ -22,16 +29,32 @@ namespace ChatClientGUI.Forms
 			InitializeComponent();
 			_service = service;
 			_myUsername = string.IsNullOrEmpty(myName) ? "Me" : myName;
-			this.Text = $"ChatApp - {_myUsername}";
+
+			// Cím beállítása a saját fejlécen
+			lblTitle.Text = $"ChatApp - {_myUsername}";
+
+			// Gombok lekerekítése (Pill shape)
+			ApplyRoundedRegion(btnSend, 20);
+			ApplyRoundedRegion(btnFile, 20);
+			ApplyRoundedRegion(btnExit, 20);
 
 			_service.MessageReceived += OnMessageReceived;
 			_service.ConnectionLost += OnConnectionLost;
 			_service.FileReceived += OnFileReceived;
 			_service.UserListReceived += OnUserListReceived;
 
+			// Gomb események
 			btnSend.Click += async (s, e) => await SendMessage();
 			btnFile.Click += async (s, e) => await SendFile();
 			btnExit.Click += (s, e) => Application.Exit();
+
+			// Fejléc gombok
+			btnCloseApp.Click += (s, e) => Application.Exit();
+			btnMinimize.Click += (s, e) => this.WindowState = FormWindowState.Minimized;
+
+			// Ablak mozgatása a fejléccel
+			pnlHeader.MouseDown += PnlHeader_MouseDown;
+			lblTitle.MouseDown += PnlHeader_MouseDown;
 
 			// Enter küldés
 			txtMessage.KeyDown += async (s, e) =>
@@ -64,6 +87,23 @@ namespace ChatClientGUI.Forms
 			lstUsers.SelectedIndex = 0;
 		}
 
+		// --- GOMB LEKEREKÍTÉS SEGÉD ---
+		private void ApplyRoundedRegion(Control control, int radius)
+		{
+			Rectangle bounds = new Rectangle(0, 0, control.Width, control.Height);
+			using (GraphicsPath path = GetRoundedPath(bounds, radius))
+			{
+				control.Region = new Region(path);
+			}
+		}
+
+		// --- ABLAK MOZGATÁS ---
+		private void PnlHeader_MouseDown(object sender, MouseEventArgs e)
+		{
+			ReleaseCapture();
+			SendMessage(this.Handle, 0x112, 0xf012, 0);
+		}
+
 		// --- FELHASZNÁLÓ LISTA ---
 		private void LstUsers_DrawItem(object sender, DrawItemEventArgs e)
 		{
@@ -78,7 +118,7 @@ namespace ChatClientGUI.Forms
 			string userName = lstUsers.Items[e.Index].ToString();
 			Graphics g = e.Graphics;
 			g.SmoothingMode = SmoothingMode.AntiAlias;
-			g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit; // Élesebb szöveg
+			g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
 
 			int dotSize = 10;
 			int dotX = e.Bounds.Left + 10;
@@ -96,24 +136,16 @@ namespace ChatClientGUI.Forms
 			TextRenderer.DrawText(g, userName, font, textRect, textColor, TextFormatFlags.VerticalCenter | TextFormatFlags.Left);
 		}
 
-		// --- DINAMIKUS MÉRETEZÉS ---
+		// --- CHAT BUBORÉKOK ---
 		private void LstMessages_MeasureItem(object sender, MeasureItemEventArgs e)
 		{
 			if (e.Index < 0 || e.Index >= lstMessages.Items.Count) return;
-
 			string msg = lstMessages.Items[e.Index].ToString();
-
-			// Max szélesség: a lista szélességének kb 70%-a
 			int maxWidth = (int)(lstMessages.Width * 0.7);
-
-			// Szöveg mérése tördeléssel
 			Size size = TextRenderer.MeasureText(e.Graphics, msg, lstMessages.Font, new Size(maxWidth, 0), TextFormatFlags.WordBreak);
-
-			// Magasság + margók (fent 10 + lent 10)
 			e.ItemHeight = size.Height + 20;
 		}
 
-		// --- BUBORÉK RAJZOLÁS ---
 		private void LstMessages_DrawItem(object sender, DrawItemEventArgs e)
 		{
 			if (e.Index < 0) return;
@@ -121,8 +153,6 @@ namespace ChatClientGUI.Forms
 			e.DrawBackground();
 			string msg = lstMessages.Items[e.Index].ToString();
 			Graphics g = e.Graphics;
-
-			// Minőség javítása (homályosság ellen)
 			g.SmoothingMode = SmoothingMode.AntiAlias;
 			g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
 
@@ -138,36 +168,24 @@ namespace ChatClientGUI.Forms
 				Color bubbleColor = isMe ? Color.FromArgb(0, 120, 215) : Color.FromArgb(230, 230, 230);
 				Color textColor = isMe ? Color.White : Color.Black;
 
-				// Max szélesség a buboréknak
 				int maxWidth = (int)(lstMessages.Width * 0.7);
-
-				// Szöveg mérése pontosan úgy, mint a MeasureItem-ben
 				Size size = TextRenderer.MeasureText(g, msg, e.Font, new Size(maxWidth, 0), TextFormatFlags.WordBreak);
 
-				// Buborék méretei
-				int bubbleWidth = size.Width + 20; // + Padding oldalt
-				int bubbleHeight = size.Height + 10; // + Padding fent/lent
+				int bubbleWidth = size.Width + 20;
+				int bubbleHeight = size.Height + 10;
 
 				Rectangle bubbleRect;
 				if (isMe)
-				{
-					// Jobbra igazítva
 					bubbleRect = new Rectangle(e.Bounds.Right - bubbleWidth - 10, e.Bounds.Top + 5, bubbleWidth, bubbleHeight);
-				}
 				else
-				{
-					// Balra igazítva
 					bubbleRect = new Rectangle(e.Bounds.Left + 10, e.Bounds.Top + 5, bubbleWidth, bubbleHeight);
-				}
 
-				// Buborék rajzolása
 				using (GraphicsPath path = GetRoundedPath(bubbleRect, 10))
 				using (var brush = new SolidBrush(bubbleColor))
 				{
 					g.FillPath(brush, path);
 				}
 
-				// Szöveg rajzolása a buborék közepére (WordBreak fontos!)
 				TextRenderer.DrawText(g, msg, e.Font, bubbleRect, textColor, TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter | TextFormatFlags.WordBreak);
 			}
 		}
@@ -189,18 +207,17 @@ namespace ChatClientGUI.Forms
 			return msg.Contains($" {_myUsername}:") || msg.Contains($"[Private ->");
 		}
 
-		// --- TOVÁBBI LOGIKA (változatlan) ---
 		private void HandleUserSelection(string selection)
 		{
 			if (selection == "[Global Chat]")
 			{
 				_currentChatPartner = null;
-				this.Text = $"ChatApp - {_myUsername} (Global)";
+				lblTitle.Text = $"ChatApp - {_myUsername} (Global)";
 			}
 			else
 			{
 				_currentChatPartner = selection;
-				this.Text = $"ChatApp - {_myUsername} -> {_currentChatPartner}";
+				lblTitle.Text = $"ChatApp - {_myUsername} -> {_currentChatPartner}";
 			}
 			RefreshChatView();
 		}

@@ -2,8 +2,15 @@
 {
 	partial class MainForm
 	{
+		/// <summary>
+		/// Required designer variable.
+		/// </summary>
 		private System.ComponentModel.IContainer components = null;
 
+		/// <summary>
+		/// Clean up any resources being used.
+		/// </summary>
+		/// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
 		protected override void Dispose(bool disposing)
 		{
 			if (disposing && (components != null))
@@ -15,6 +22,10 @@
 
 		#region Windows Form Designer generated code
 
+		/// <summary>
+		/// Required method for Designer support - do not modify
+		/// the contents of this method with the code editor.
+		/// </summary>
 		private void InitializeComponent()
 		{
 			this.lstMessages = new System.Windows.Forms.ListBox();
@@ -27,9 +38,14 @@
 			this.pnlBottom = new System.Windows.Forms.Panel();
 			this.pnlRight = new System.Windows.Forms.Panel();
 			this.pnlCenter = new System.Windows.Forms.Panel();
+			this.pnlHeader = new System.Windows.Forms.Panel();
+			this.lblTitle = new System.Windows.Forms.Label();
+			this.btnCloseApp = new System.Windows.Forms.Button();
+			this.btnMinimize = new System.Windows.Forms.Button();
 			this.pnlBottom.SuspendLayout();
 			this.pnlRight.SuspendLayout();
 			this.pnlCenter.SuspendLayout();
+			this.pnlHeader.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// lstMessages
@@ -136,7 +152,7 @@
 			// 
 			// pnlBottom
 			// 
-			this.pnlBottom.BackColor = System.Drawing.Color.Gainsboro;
+			this.pnlBottom.BackColor = System.Drawing.Color.White;
 			this.pnlBottom.Controls.Add(this.txtMessage);
 			this.pnlBottom.Controls.Add(this.btnSend);
 			this.pnlBottom.Controls.Add(this.btnFile);
@@ -153,7 +169,7 @@
 			this.pnlRight.Controls.Add(this.label1);
 			this.pnlRight.Controls.Add(this.btnExit);
 			this.pnlRight.Dock = System.Windows.Forms.DockStyle.Right;
-			this.pnlRight.Location = new System.Drawing.Point(640, 0);
+			this.pnlRight.Location = new System.Drawing.Point(640, 40);
 			this.pnlRight.Name = "pnlRight";
 			this.pnlRight.Size = new System.Drawing.Size(160, 466);
 			this.pnlRight.TabIndex = 8;
@@ -163,11 +179,62 @@
 			this.pnlCenter.BackColor = System.Drawing.Color.White;
 			this.pnlCenter.Controls.Add(this.lstMessages);
 			this.pnlCenter.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.pnlCenter.Location = new System.Drawing.Point(0, 0);
+			this.pnlCenter.Location = new System.Drawing.Point(0, 40);
 			this.pnlCenter.Name = "pnlCenter";
 			this.pnlCenter.Padding = new System.Windows.Forms.Padding(10);
-			this.pnlCenter.Size = new System.Drawing.Size(640, 416);
+			this.pnlCenter.Size = new System.Drawing.Size(640, 376);
 			this.pnlCenter.TabIndex = 9;
+			// 
+			// pnlHeader
+			// 
+			this.pnlHeader.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(246)))), ((int)(((byte)(247)))));
+			this.pnlHeader.Controls.Add(this.btnMinimize);
+			this.pnlHeader.Controls.Add(this.btnCloseApp);
+			this.pnlHeader.Controls.Add(this.lblTitle);
+			this.pnlHeader.Dock = System.Windows.Forms.DockStyle.Top;
+			this.pnlHeader.Location = new System.Drawing.Point(0, 0);
+			this.pnlHeader.Name = "pnlHeader";
+			this.pnlHeader.Size = new System.Drawing.Size(800, 40);
+			this.pnlHeader.TabIndex = 10;
+			// 
+			// lblTitle
+			// 
+			this.lblTitle.AutoSize = true;
+			this.lblTitle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+			this.lblTitle.ForeColor = System.Drawing.Color.DimGray;
+			this.lblTitle.Location = new System.Drawing.Point(12, 10);
+			this.lblTitle.Name = "lblTitle";
+			this.lblTitle.Size = new System.Drawing.Size(69, 19);
+			this.lblTitle.TabIndex = 0;
+			this.lblTitle.Text = "ChatApp";
+			// 
+			// btnCloseApp
+			// 
+			this.btnCloseApp.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.btnCloseApp.Cursor = System.Windows.Forms.Cursors.Hand;
+			this.btnCloseApp.FlatAppearance.BorderSize = 0;
+			this.btnCloseApp.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+			this.btnCloseApp.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+			this.btnCloseApp.Location = new System.Drawing.Point(760, 0);
+			this.btnCloseApp.Name = "btnCloseApp";
+			this.btnCloseApp.Size = new System.Drawing.Size(40, 40);
+			this.btnCloseApp.TabIndex = 1;
+			this.btnCloseApp.Text = "X";
+			this.btnCloseApp.UseVisualStyleBackColor = true;
+			// 
+			// btnMinimize
+			// 
+			this.btnMinimize.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.btnMinimize.Cursor = System.Windows.Forms.Cursors.Hand;
+			this.btnMinimize.FlatAppearance.BorderSize = 0;
+			this.btnMinimize.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+			this.btnMinimize.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+			this.btnMinimize.Location = new System.Drawing.Point(720, 0);
+			this.btnMinimize.Name = "btnMinimize";
+			this.btnMinimize.Size = new System.Drawing.Size(40, 40);
+			this.btnMinimize.TabIndex = 2;
+			this.btnMinimize.Text = "_";
+			this.btnMinimize.UseVisualStyleBackColor = true;
 			// 
 			// MainForm
 			// 
@@ -175,8 +242,10 @@
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(800, 466);
 			this.Controls.Add(this.pnlCenter);
-			this.Controls.Add(this.pnlBottom);
 			this.Controls.Add(this.pnlRight);
+			this.Controls.Add(this.pnlBottom);
+			this.Controls.Add(this.pnlHeader);
+			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
 			this.Name = "MainForm";
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
 			this.Text = "ChatApp";
@@ -184,12 +253,15 @@
 			this.pnlBottom.PerformLayout();
 			this.pnlRight.ResumeLayout(false);
 			this.pnlCenter.ResumeLayout(false);
+			this.pnlHeader.ResumeLayout(false);
+			this.pnlHeader.PerformLayout();
 			this.ResumeLayout(false);
+
 		}
 
 		#endregion
 
-		// DEKLARÁCIÓK
+		// DEKLARÁCIÓK - Csak itt szerepelhetnek! Ellenőrizd a MainForm.cs-t, hogy onnan törölve lettek-e!
 		private System.Windows.Forms.ListBox lstMessages;
 		private System.Windows.Forms.TextBox txtMessage;
 		private System.Windows.Forms.Button btnSend;
@@ -200,5 +272,9 @@
 		private System.Windows.Forms.Panel pnlBottom;
 		private System.Windows.Forms.Panel pnlRight;
 		private System.Windows.Forms.Panel pnlCenter;
+		private System.Windows.Forms.Panel pnlHeader;
+		private System.Windows.Forms.Label lblTitle;
+		private System.Windows.Forms.Button btnCloseApp;
+		private System.Windows.Forms.Button btnMinimize;
 	}
 }

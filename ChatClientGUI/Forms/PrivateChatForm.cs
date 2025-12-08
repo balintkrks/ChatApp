@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Reflection.PortableExecutable;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using ChatClientGUI.Services;
@@ -9,6 +11,11 @@ namespace ChatClientGUI.Forms
 {
 	public partial class PrivateChatForm : Form
 	{
+		[DllImport("user32.dll", EntryPoint = "ReleaseCapture")]
+		private extern static void ReleaseCapture();
+		[DllImport("user32.dll", EntryPoint = "SendMessage")]
+		private extern static void SendMessage(System.IntPtr hwnd, int wmsg, int wparam, int lparam);
+
 		private readonly ClientService _service;
 		private readonly string _targetUser;
 
@@ -17,12 +24,20 @@ namespace ChatClientGUI.Forms
 			InitializeComponent();
 			_service = service;
 			_targetUser = targetUser;
-			this.Text = $"Private Chat - {_targetUser}";
+
+			lblTitle.Text = $"Private Chat - {_targetUser}";
+
+			ApplyRoundedRegion(btnSendPrivate, 20);
 
 			_service.MessageReceived += OnMessageReceived;
 			btnSendPrivate.Click += async (s, e) => await SendPrivate();
 
-			// Enter billentyű
+			// Fejléc
+			btnCloseApp.Click += (s, e) => this.Close();
+			btnMinimize.Click += (s, e) => this.WindowState = FormWindowState.Minimized;
+			pnlHeader.MouseDown += PnlHeader_MouseDown;
+			lblTitle.MouseDown += PnlHeader_MouseDown;
+
 			txtPrivateInput.KeyDown += async (s, e) =>
 			{
 				if (e.KeyCode == Keys.Enter && !e.Shift)
@@ -38,13 +53,26 @@ namespace ChatClientGUI.Forms
 			this.FormClosing += (s, e) => _service.MessageReceived -= OnMessageReceived;
 		}
 
+		private void ApplyRoundedRegion(Control control, int radius)
+		{
+			Rectangle bounds = new Rectangle(0, 0, control.Width, control.Height);
+			using (GraphicsPath path = GetRoundedPath(bounds, radius))
+			{
+				control.Region = new Region(path);
+			}
+		}
+
+		private void PnlHeader_MouseDown(object sender, MouseEventArgs e)
+		{
+			ReleaseCapture();
+			SendMessage(this.Handle, 0x112, 0xf012, 0);
+		}
+
 		private void LstPrivateMessages_MeasureItem(object sender, MeasureItemEventArgs e)
 		{
 			if (e.Index < 0 || e.Index >= lstPrivateMessages.Items.Count) return;
-
 			string msg = lstPrivateMessages.Items[e.Index].ToString();
 			int maxWidth = (int)(lstPrivateMessages.Width * 0.7);
-
 			Size size = TextRenderer.MeasureText(e.Graphics, msg, lstPrivateMessages.Font, new Size(maxWidth, 0), TextFormatFlags.WordBreak);
 			e.ItemHeight = size.Height + 20;
 		}
@@ -56,8 +84,6 @@ namespace ChatClientGUI.Forms
 			e.DrawBackground();
 			string msg = lstPrivateMessages.Items[e.Index].ToString();
 			Graphics g = e.Graphics;
-
-			// Élesség javítása
 			g.SmoothingMode = SmoothingMode.AntiAlias;
 			g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
 
@@ -85,7 +111,6 @@ namespace ChatClientGUI.Forms
 			}
 
 			TextRenderer.DrawText(g, msg, e.Font, bubbleRect, textColor, TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter | TextFormatFlags.WordBreak);
-
 			e.DrawFocusRectangle();
 		}
 

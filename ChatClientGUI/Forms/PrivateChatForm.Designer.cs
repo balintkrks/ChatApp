@@ -22,8 +22,13 @@
 			this.btnSendPrivate = new System.Windows.Forms.Button();
 			this.pnlBottom = new System.Windows.Forms.Panel();
 			this.pnlCenter = new System.Windows.Forms.Panel();
+			this.pnlHeader = new System.Windows.Forms.Panel();
+			this.lblTitle = new System.Windows.Forms.Label();
+			this.btnCloseApp = new System.Windows.Forms.Button();
+			this.btnMinimize = new System.Windows.Forms.Button();
 			this.pnlBottom.SuspendLayout();
 			this.pnlCenter.SuspendLayout();
+			this.pnlHeader.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// lstPrivateMessages
@@ -85,11 +90,62 @@
 			this.pnlCenter.BackColor = System.Drawing.Color.White;
 			this.pnlCenter.Controls.Add(this.lstPrivateMessages);
 			this.pnlCenter.Dock = System.Windows.Forms.DockStyle.Fill;
-			this.pnlCenter.Location = new System.Drawing.Point(0, 0);
+			this.pnlCenter.Location = new System.Drawing.Point(0, 40);
 			this.pnlCenter.Name = "pnlCenter";
 			this.pnlCenter.Padding = new System.Windows.Forms.Padding(10);
-			this.pnlCenter.Size = new System.Drawing.Size(584, 321);
+			this.pnlCenter.Size = new System.Drawing.Size(584, 281);
 			this.pnlCenter.TabIndex = 4;
+			// 
+			// pnlHeader
+			// 
+			this.pnlHeader.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(246)))), ((int)(((byte)(247)))));
+			this.pnlHeader.Controls.Add(this.btnMinimize);
+			this.pnlHeader.Controls.Add(this.btnCloseApp);
+			this.pnlHeader.Controls.Add(this.lblTitle);
+			this.pnlHeader.Dock = System.Windows.Forms.DockStyle.Top;
+			this.pnlHeader.Location = new System.Drawing.Point(0, 0);
+			this.pnlHeader.Name = "pnlHeader";
+			this.pnlHeader.Size = new System.Drawing.Size(584, 40);
+			this.pnlHeader.TabIndex = 5;
+			// 
+			// lblTitle
+			// 
+			this.lblTitle.AutoSize = true;
+			this.lblTitle.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+			this.lblTitle.ForeColor = System.Drawing.Color.DimGray;
+			this.lblTitle.Location = new System.Drawing.Point(12, 10);
+			this.lblTitle.Name = "lblTitle";
+			this.lblTitle.Size = new System.Drawing.Size(89, 19);
+			this.lblTitle.TabIndex = 0;
+			this.lblTitle.Text = "Private Chat";
+			// 
+			// btnCloseApp
+			// 
+			this.btnCloseApp.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.btnCloseApp.Cursor = System.Windows.Forms.Cursors.Hand;
+			this.btnCloseApp.FlatAppearance.BorderSize = 0;
+			this.btnCloseApp.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+			this.btnCloseApp.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+			this.btnCloseApp.Location = new System.Drawing.Point(544, 0);
+			this.btnCloseApp.Name = "btnCloseApp";
+			this.btnCloseApp.Size = new System.Drawing.Size(40, 40);
+			this.btnCloseApp.TabIndex = 1;
+			this.btnCloseApp.Text = "X";
+			this.btnCloseApp.UseVisualStyleBackColor = true;
+			// 
+			// btnMinimize
+			// 
+			this.btnMinimize.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.btnMinimize.Cursor = System.Windows.Forms.Cursors.Hand;
+			this.btnMinimize.FlatAppearance.BorderSize = 0;
+			this.btnMinimize.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+			this.btnMinimize.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+			this.btnMinimize.Location = new System.Drawing.Point(504, 0);
+			this.btnMinimize.Name = "btnMinimize";
+			this.btnMinimize.Size = new System.Drawing.Size(40, 40);
+			this.btnMinimize.TabIndex = 2;
+			this.btnMinimize.Text = "_";
+			this.btnMinimize.UseVisualStyleBackColor = true;
 			// 
 			// PrivateChatForm
 			// 
@@ -98,23 +154,30 @@
 			this.ClientSize = new System.Drawing.Size(584, 371);
 			this.Controls.Add(this.pnlCenter);
 			this.Controls.Add(this.pnlBottom);
+			this.Controls.Add(this.pnlHeader);
+			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
 			this.Name = "PrivateChatForm";
 			this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
 			this.Text = "Private Chat";
 			this.pnlBottom.ResumeLayout(false);
 			this.pnlBottom.PerformLayout();
 			this.pnlCenter.ResumeLayout(false);
+			this.pnlHeader.ResumeLayout(false);
+			this.pnlHeader.PerformLayout();
 			this.ResumeLayout(false);
 
 		}
 
 		#endregion
 
-		// DEKLARÁCIÓK - csak itt szerepelhetnek!
 		private System.Windows.Forms.ListBox lstPrivateMessages;
 		private System.Windows.Forms.TextBox txtPrivateInput;
 		private System.Windows.Forms.Button btnSendPrivate;
 		private System.Windows.Forms.Panel pnlBottom;
 		private System.Windows.Forms.Panel pnlCenter;
+		private System.Windows.Forms.Panel pnlHeader;
+		private System.Windows.Forms.Label lblTitle;
+		private System.Windows.Forms.Button btnCloseApp;
+		private System.Windows.Forms.Button btnMinimize;
 	}
 }
