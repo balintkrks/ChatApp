@@ -24,16 +24,18 @@ namespace ChatClientGUI.Forms
 			_myUsername = string.IsNullOrEmpty(myName) ? "Me" : myName;
 			this.Text = $"ChatApp - {_myUsername}";
 
+			// Események feliratkozása
 			_service.MessageReceived += OnMessageReceived;
 			_service.ConnectionLost += OnConnectionLost;
 			_service.FileReceived += OnFileReceived;
 			_service.UserListReceived += OnUserListReceived;
 
+			// UI Események (Ezek a gombok a Designer fájlban vannak definiálva!)
 			btnSend.Click += async (s, e) => await SendMessage();
 			btnFile.Click += async (s, e) => await SendFile();
 			btnExit.Click += (s, e) => Application.Exit();
 
-			// ListBox OwnerDraw Events
+			// Buborékos chat rajzolása
 			lstMessages.MeasureItem += LstMessages_MeasureItem;
 			lstMessages.DrawItem += LstMessages_DrawItem;
 
@@ -55,7 +57,7 @@ namespace ChatClientGUI.Forms
 
 		private void LstMessages_MeasureItem(object sender, MeasureItemEventArgs e)
 		{
-			e.ItemHeight = 25;
+			e.ItemHeight = 30; // Sorok magassága
 		}
 
 		private void LstMessages_DrawItem(object sender, DrawItemEventArgs e)
@@ -72,6 +74,7 @@ namespace ChatClientGUI.Forms
 
 			if (isSystem)
 			{
+				// Rendszerüzenet középen
 				TextRenderer.DrawText(g, msg, e.Font, e.Bounds, Color.Gray, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
 			}
 			else
@@ -80,18 +83,20 @@ namespace ChatClientGUI.Forms
 				Color textColor = isMe ? Color.White : Color.Black;
 
 				var size = TextRenderer.MeasureText(g, msg, e.Font);
-				int padding = 5;
+				int padding = 6;
 				int bubbleWidth = size.Width + 2 * padding;
-				int bubbleHeight = e.Bounds.Height - 4;
+				int bubbleHeight = e.Bounds.Height - 6;
 
 				Rectangle bubbleRect;
 				if (isMe)
 				{
-					bubbleRect = new Rectangle(e.Bounds.Right - bubbleWidth - 5, e.Bounds.Top + 2, bubbleWidth, bubbleHeight);
+					// Jobbra igazítva
+					bubbleRect = new Rectangle(e.Bounds.Right - bubbleWidth - 5, e.Bounds.Top + 3, bubbleWidth, bubbleHeight);
 				}
 				else
 				{
-					bubbleRect = new Rectangle(e.Bounds.Left + 5, e.Bounds.Top + 2, bubbleWidth, bubbleHeight);
+					// Balra igazítva
+					bubbleRect = new Rectangle(e.Bounds.Left + 5, e.Bounds.Top + 3, bubbleWidth, bubbleHeight);
 				}
 
 				using (var brush = new SolidBrush(bubbleColor))
@@ -107,7 +112,6 @@ namespace ChatClientGUI.Forms
 
 		private bool IsMyMessage(string msg)
 		{
-			// Simple check: does it contain my name?
 			return msg.Contains($" {_myUsername}:") || msg.Contains($"[Private ->");
 		}
 
@@ -251,14 +255,6 @@ namespace ChatClientGUI.Forms
 				string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
 				Directory.CreateDirectory(folder);
 				string fullPath = Path.Combine(folder, fileName);
-				int count = 1;
-				string nameOnly = Path.GetFileNameWithoutExtension(fileName);
-				string ext = Path.GetExtension(fileName);
-				while (File.Exists(fullPath))
-				{
-					fullPath = Path.Combine(folder, $"{nameOnly}_{count}{ext}");
-					count++;
-				}
 				File.WriteAllBytes(fullPath, content);
 				MessageBox.Show($"File saved: {fullPath}", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
 			}
@@ -276,11 +272,6 @@ namespace ChatClientGUI.Forms
 				MessageBox.Show("Disconnected from server.", "Connection Lost", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 				Application.Exit();
 			});
-		}
-
-		protected override void OnFormClosing(FormClosingEventArgs e)
-		{
-			Application.Exit();
 		}
 	}
 }

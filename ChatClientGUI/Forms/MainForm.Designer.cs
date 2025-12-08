@@ -41,7 +41,7 @@
 			this.lstMessages.Font = new System.Drawing.Font("Segoe UI", 10F);
 			this.lstMessages.FormattingEnabled = true;
 			this.lstMessages.IntegralHeight = false;
-			this.lstMessages.ItemHeight = 17;
+			this.lstMessages.ItemHeight = 30;
 			this.lstMessages.Location = new System.Drawing.Point(10, 10);
 			this.lstMessages.Name = "lstMessages";
 			this.lstMessages.Size = new System.Drawing.Size(560, 396);
@@ -188,6 +188,7 @@
 
 		#endregion
 
+		// DEKLARÁCIÓK - Ezek csak itt szerepelnek!
 		private System.Windows.Forms.ListBox lstMessages;
 		private System.Windows.Forms.TextBox txtMessage;
 		private System.Windows.Forms.Button btnSend;
