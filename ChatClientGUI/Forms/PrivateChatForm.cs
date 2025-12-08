@@ -22,7 +22,7 @@ namespace ChatClientGUI.Forms
         }
 
         private async Task SendPrivate()
-        {
+        {s
             if (string.IsNullOrWhiteSpace(txtPrivateInput.Text)) return;
 
             string msg = txtPrivateInput.Text;
