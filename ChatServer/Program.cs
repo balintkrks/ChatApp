@@ -103,19 +103,22 @@ class Program
 
                 if (msg.StartsWith("KICK:"))
                 {
+                    Console.WriteLine($"[DEBUG] KICK command received from {username}: {msg}");
                     var parts = msg.Split(':', 2);
                     if (parts.Length == 2)
                     {
                         string targetUser = parts[1].Trim();
+                        Console.WriteLine($"[DEBUG] Target user to kick: {targetUser}");
 
-                        if (username == "ChatBot")
+                        if (username.StartsWith("ChatBot"))
                         {
                             if (UserClients.TryGetValue(targetUser, out var targetClient))
                             {
+                                Console.WriteLine($"[DEBUG] User {targetUser} found. Executing kick.");
                                 try
                                 {
                                     var targetStream = targetClient.GetStream();
-                                    await Protocol.SendMessageAsync(targetStream, "SERVER: You have been kicked by ChatBot.");
+                                    await Protocol.SendMessageAsync(targetStream, "SERVER: You have been kicked by the ChatBot.");
                                 }
                                 catch { }
 
@@ -132,6 +135,14 @@ class Program
                                     try { await Protocol.SendMessageAsync(kv.Value, kickMsg); } catch { }
                                 }
                             }
+                            else
+                            {
+                                Console.WriteLine($"[DEBUG] FAILED: User {targetUser} not found in active clients.");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine($"[DEBUG] FAILED: Permission denied for {username}. Only ChatBot can kick.");
                         }
                     }
                     continue;
