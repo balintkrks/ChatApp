@@ -33,11 +33,19 @@ namespace ChatClientGUI.Forms
 			btnFile.Click += async (s, e) => await SendFile();
 			btnExit.Click += (s, e) => Application.Exit();
 
-			// --- CHAT BUBORÉKOK RAJZOLÁSA ---
+			// Enter küldés
+			txtMessage.KeyDown += async (s, e) =>
+			{
+				if (e.KeyCode == Keys.Enter && !e.Shift)
+				{
+					e.SuppressKeyPress = true;
+					await SendMessage();
+				}
+			};
+
+			// Rajzolás
 			lstMessages.MeasureItem += LstMessages_MeasureItem;
 			lstMessages.DrawItem += LstMessages_DrawItem;
-
-			// --- FELHASZNÁLÓ LISTA RAJZOLÁSA (ÚJ) ---
 			lstUsers.DrawItem += LstUsers_DrawItem;
 
 			lstMessages.DoubleClick += (s, e) =>
@@ -56,58 +64,56 @@ namespace ChatClientGUI.Forms
 			lstUsers.SelectedIndex = 0;
 		}
 
-		// === FELHASZNÁLÓ LISTA RAJZOLÁSA ===
+		// --- FELHASZNÁLÓ LISTA ---
 		private void LstUsers_DrawItem(object sender, DrawItemEventArgs e)
 		{
 			if (e.Index < 0) return;
 
-			// Háttér rajzolása (Kijelölésnél egyedi szín)
+			e.DrawBackground();
 			if ((e.State & DrawItemState.Selected) == DrawItemState.Selected)
-			{
-				e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(220, 240, 255)), e.Bounds); // Halványkék
-			}
+				e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(220, 240, 255)), e.Bounds);
 			else
-			{
-				e.Graphics.FillRectangle(new SolidBrush(Color.WhiteSmoke), e.Bounds); // Alap háttér
-			}
+				e.Graphics.FillRectangle(new SolidBrush(Color.WhiteSmoke), e.Bounds);
 
 			string userName = lstUsers.Items[e.Index].ToString();
 			Graphics g = e.Graphics;
 			g.SmoothingMode = SmoothingMode.AntiAlias;
+			g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit; // Élesebb szöveg
 
-			// "Online" pötty (indikátor)
 			int dotSize = 10;
 			int dotX = e.Bounds.Left + 10;
 			int dotY = e.Bounds.Top + (e.Bounds.Height - dotSize) / 2;
-
-			// Ha "[Global Chat]", akkor kék, amúgy zöld (mindenki online, aki itt van)
 			Color dotColor = (userName == "[Global Chat]") ? Color.DodgerBlue : Color.LimeGreen;
 
 			using (var brush = new SolidBrush(dotColor))
-			{
 				g.FillEllipse(brush, dotX, dotY, dotSize, dotSize);
-			}
 
-			// Név kirajzolása
 			Color textColor = Color.Black;
-			// A Global Chat legyen félkövér
 			Font font = (userName == "[Global Chat]") ? new Font(e.Font, FontStyle.Bold) : e.Font;
-
 			int textX = dotX + dotSize + 10;
 			Rectangle textRect = new Rectangle(textX, e.Bounds.Top, e.Bounds.Width - textX, e.Bounds.Height);
 
 			TextRenderer.DrawText(g, userName, font, textRect, textColor, TextFormatFlags.VerticalCenter | TextFormatFlags.Left);
-
-			// Ha nem akarod a Windows alap pöttyös fókuszkeretét, ezt kikommentelheted:
-			// e.DrawFocusRectangle(); 
 		}
 
-		// === CHAT BUBORÉKOK RAJZOLÁSA ===
+		// --- DINAMIKUS MÉRETEZÉS ---
 		private void LstMessages_MeasureItem(object sender, MeasureItemEventArgs e)
 		{
-			e.ItemHeight = 35;
+			if (e.Index < 0 || e.Index >= lstMessages.Items.Count) return;
+
+			string msg = lstMessages.Items[e.Index].ToString();
+
+			// Max szélesség: a lista szélességének kb 70%-a
+			int maxWidth = (int)(lstMessages.Width * 0.7);
+
+			// Szöveg mérése tördeléssel
+			Size size = TextRenderer.MeasureText(e.Graphics, msg, lstMessages.Font, new Size(maxWidth, 0), TextFormatFlags.WordBreak);
+
+			// Magasság + margók (fent 10 + lent 10)
+			e.ItemHeight = size.Height + 20;
 		}
 
+		// --- BUBORÉK RAJZOLÁS ---
 		private void LstMessages_DrawItem(object sender, DrawItemEventArgs e)
 		{
 			if (e.Index < 0) return;
@@ -115,38 +121,54 @@ namespace ChatClientGUI.Forms
 			e.DrawBackground();
 			string msg = lstMessages.Items[e.Index].ToString();
 			Graphics g = e.Graphics;
+
+			// Minőség javítása (homályosság ellen)
 			g.SmoothingMode = SmoothingMode.AntiAlias;
+			g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
 
 			bool isMe = IsMyMessage(msg);
 			bool isSystem = msg.Contains("FILE") || msg.Contains("System") || msg.Contains("Server");
 
 			if (isSystem)
 			{
-				TextRenderer.DrawText(g, msg, new Font(e.Font, FontStyle.Italic), e.Bounds, Color.Gray, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+				TextRenderer.DrawText(g, msg, new Font(e.Font, FontStyle.Italic), e.Bounds, Color.Gray, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.WordBreak);
 			}
 			else
 			{
 				Color bubbleColor = isMe ? Color.FromArgb(0, 120, 215) : Color.FromArgb(230, 230, 230);
 				Color textColor = isMe ? Color.White : Color.Black;
 
-				var size = TextRenderer.MeasureText(g, msg, e.Font);
-				int padding = 10;
-				int bubbleWidth = size.Width + 2 * padding;
-				int bubbleHeight = e.Bounds.Height - 6;
+				// Max szélesség a buboréknak
+				int maxWidth = (int)(lstMessages.Width * 0.7);
+
+				// Szöveg mérése pontosan úgy, mint a MeasureItem-ben
+				Size size = TextRenderer.MeasureText(g, msg, e.Font, new Size(maxWidth, 0), TextFormatFlags.WordBreak);
+
+				// Buborék méretei
+				int bubbleWidth = size.Width + 20; // + Padding oldalt
+				int bubbleHeight = size.Height + 10; // + Padding fent/lent
 
 				Rectangle bubbleRect;
 				if (isMe)
-					bubbleRect = new Rectangle(e.Bounds.Right - bubbleWidth - 10, e.Bounds.Top + 3, bubbleWidth, bubbleHeight);
+				{
+					// Jobbra igazítva
+					bubbleRect = new Rectangle(e.Bounds.Right - bubbleWidth - 10, e.Bounds.Top + 5, bubbleWidth, bubbleHeight);
+				}
 				else
-					bubbleRect = new Rectangle(e.Bounds.Left + 10, e.Bounds.Top + 3, bubbleWidth, bubbleHeight);
+				{
+					// Balra igazítva
+					bubbleRect = new Rectangle(e.Bounds.Left + 10, e.Bounds.Top + 5, bubbleWidth, bubbleHeight);
+				}
 
+				// Buborék rajzolása
 				using (GraphicsPath path = GetRoundedPath(bubbleRect, 10))
 				using (var brush = new SolidBrush(bubbleColor))
 				{
 					g.FillPath(brush, path);
 				}
 
-				TextRenderer.DrawText(g, msg, e.Font, bubbleRect, textColor, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+				// Szöveg rajzolása a buborék közepére (WordBreak fontos!)
+				TextRenderer.DrawText(g, msg, e.Font, bubbleRect, textColor, TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter | TextFormatFlags.WordBreak);
 			}
 		}
 
@@ -167,6 +189,7 @@ namespace ChatClientGUI.Forms
 			return msg.Contains($" {_myUsername}:") || msg.Contains($"[Private ->");
 		}
 
+		// --- TOVÁBBI LOGIKA (változatlan) ---
 		private void HandleUserSelection(string selection)
 		{
 			if (selection == "[Global Chat]")

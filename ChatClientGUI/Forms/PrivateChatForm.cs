@@ -22,7 +22,16 @@ namespace ChatClientGUI.Forms
 			_service.MessageReceived += OnMessageReceived;
 			btnSendPrivate.Click += async (s, e) => await SendPrivate();
 
-			// Rajzolás bekapcsolása
+			// Enter billentyű
+			txtPrivateInput.KeyDown += async (s, e) =>
+			{
+				if (e.KeyCode == Keys.Enter && !e.Shift)
+				{
+					e.SuppressKeyPress = true;
+					await SendPrivate();
+				}
+			};
+
 			lstPrivateMessages.MeasureItem += LstPrivateMessages_MeasureItem;
 			lstPrivateMessages.DrawItem += LstPrivateMessages_DrawItem;
 
@@ -31,7 +40,13 @@ namespace ChatClientGUI.Forms
 
 		private void LstPrivateMessages_MeasureItem(object sender, MeasureItemEventArgs e)
 		{
-			e.ItemHeight = 35; // Kicsit nagyobbra vettük, hogy szellős legyen
+			if (e.Index < 0 || e.Index >= lstPrivateMessages.Items.Count) return;
+
+			string msg = lstPrivateMessages.Items[e.Index].ToString();
+			int maxWidth = (int)(lstPrivateMessages.Width * 0.7);
+
+			Size size = TextRenderer.MeasureText(e.Graphics, msg, lstPrivateMessages.Font, new Size(maxWidth, 0), TextFormatFlags.WordBreak);
+			e.ItemHeight = size.Height + 20;
 		}
 
 		private void LstPrivateMessages_DrawItem(object sender, DrawItemEventArgs e)
@@ -41,44 +56,39 @@ namespace ChatClientGUI.Forms
 			e.DrawBackground();
 			string msg = lstPrivateMessages.Items[e.Index].ToString();
 			Graphics g = e.Graphics;
+
+			// Élesség javítása
 			g.SmoothingMode = SmoothingMode.AntiAlias;
+			g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
 
 			bool isMe = msg.StartsWith("Me:");
 
-			// Színek (Ugyanaz, mint a főablakon)
 			Color bubbleColor = isMe ? Color.FromArgb(0, 120, 215) : Color.FromArgb(230, 230, 230);
 			Color textColor = isMe ? Color.White : Color.Black;
 
-			var size = TextRenderer.MeasureText(g, msg, e.Font);
-			int padding = 10;
-			int bubbleWidth = size.Width + 2 * padding;
-			int bubbleHeight = e.Bounds.Height - 6;
+			int maxWidth = (int)(lstPrivateMessages.Width * 0.7);
+			Size size = TextRenderer.MeasureText(g, msg, e.Font, new Size(maxWidth, 0), TextFormatFlags.WordBreak);
+
+			int bubbleWidth = size.Width + 20;
+			int bubbleHeight = size.Height + 10;
 
 			Rectangle bubbleRect;
 			if (isMe)
-			{
-				// Jobbra
-				bubbleRect = new Rectangle(e.Bounds.Right - bubbleWidth - 10, e.Bounds.Top + 3, bubbleWidth, bubbleHeight);
-			}
+				bubbleRect = new Rectangle(e.Bounds.Right - bubbleWidth - 10, e.Bounds.Top + 5, bubbleWidth, bubbleHeight);
 			else
-			{
-				// Balra
-				bubbleRect = new Rectangle(e.Bounds.Left + 10, e.Bounds.Top + 3, bubbleWidth, bubbleHeight);
-			}
+				bubbleRect = new Rectangle(e.Bounds.Left + 10, e.Bounds.Top + 5, bubbleWidth, bubbleHeight);
 
-			// Lekerekített buborék rajzolása
 			using (GraphicsPath path = GetRoundedPath(bubbleRect, 10))
 			using (var brush = new SolidBrush(bubbleColor))
 			{
 				g.FillPath(brush, path);
 			}
 
-			TextRenderer.DrawText(g, msg, e.Font, bubbleRect, textColor, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+			TextRenderer.DrawText(g, msg, e.Font, bubbleRect, textColor, TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter | TextFormatFlags.WordBreak);
 
 			e.DrawFocusRectangle();
 		}
 
-		// Segédfüggvény a lekerekítéshez
 		private GraphicsPath GetRoundedPath(Rectangle rect, int radius)
 		{
 			GraphicsPath path = new GraphicsPath();
