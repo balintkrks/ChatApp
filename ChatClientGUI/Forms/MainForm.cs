@@ -33,8 +33,12 @@ namespace ChatClientGUI.Forms
 			btnFile.Click += async (s, e) => await SendFile();
 			btnExit.Click += (s, e) => Application.Exit();
 
+			// CHAT Buborékok rajzolása
 			lstMessages.MeasureItem += LstMessages_MeasureItem;
 			lstMessages.DrawItem += LstMessages_DrawItem;
+
+			// FELHASZNÁLÓ LISTA rajzolása (ÚJ)
+			lstUsers.DrawItem += LstUsers_DrawItem;
 
 			lstMessages.DoubleClick += (s, e) =>
 			{
@@ -52,6 +56,52 @@ namespace ChatClientGUI.Forms
 			lstUsers.SelectedIndex = 0;
 		}
 
+		// --- FELHASZNÁLÓ LISTA RAJZOLÁSA ---
+		private void LstUsers_DrawItem(object sender, DrawItemEventArgs e)
+		{
+			if (e.Index < 0) return;
+
+			// Háttér rajzolása (Kijelölésnél más szín)
+			if ((e.State & DrawItemState.Selected) == DrawItemState.Selected)
+			{
+				e.Graphics.FillRectangle(new SolidBrush(Color.FromArgb(220, 240, 255)), e.Bounds); // Halvány kék kijelölés
+			}
+			else
+			{
+				e.Graphics.FillRectangle(new SolidBrush(Color.WhiteSmoke), e.Bounds);
+			}
+
+			string userName = lstUsers.Items[e.Index].ToString();
+			Graphics g = e.Graphics;
+			g.SmoothingMode = SmoothingMode.AntiAlias;
+
+			// "Online" pötty rajzolása
+			int dotSize = 10;
+			int dotX = e.Bounds.Left + 10;
+			int dotY = e.Bounds.Top + (e.Bounds.Height - dotSize) / 2;
+
+			// Ha "[Global Chat]", akkor kék ikon, amúgy zöld (online)
+			Color dotColor = (userName == "[Global Chat]") ? Color.DodgerBlue : Color.LimeGreen;
+
+			using (var brush = new SolidBrush(dotColor))
+			{
+				g.FillEllipse(brush, dotX, dotY, dotSize, dotSize);
+			}
+
+			// Név rajzolása
+			Color textColor = Color.Black;
+			Font font = (userName == "[Global Chat]") ? new Font(e.Font, FontStyle.Bold) : e.Font;
+
+			int textX = dotX + dotSize + 10;
+			Rectangle textRect = new Rectangle(textX, e.Bounds.Top, e.Bounds.Width - textX, e.Bounds.Height);
+
+			TextRenderer.DrawText(g, userName, font, textRect, textColor, TextFormatFlags.VerticalCenter | TextFormatFlags.Left);
+
+			// Fókusz keret eltüntetése (opcionális, szebb nélküle)
+			// e.DrawFocusRectangle(); 
+		}
+
+		// --- CHAT BUBORÉK RAJZOLÁSA ---
 		private void LstMessages_MeasureItem(object sender, MeasureItemEventArgs e)
 		{
 			e.ItemHeight = 35;
@@ -97,8 +147,6 @@ namespace ChatClientGUI.Forms
 
 				TextRenderer.DrawText(g, msg, e.Font, bubbleRect, textColor, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
 			}
-
-			e.DrawFocusRectangle();
 		}
 
 		private GraphicsPath GetRoundedPath(Rectangle rect, int radius)

@@ -108,10 +108,11 @@
 			this.lstUsers.BackColor = System.Drawing.Color.WhiteSmoke;
 			this.lstUsers.BorderStyle = System.Windows.Forms.BorderStyle.None;
 			this.lstUsers.Dock = System.Windows.Forms.DockStyle.Fill;
+			this.lstUsers.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
 			this.lstUsers.Font = new System.Drawing.Font("Segoe UI", 9F);
 			this.lstUsers.FormattingEnabled = true;
 			this.lstUsers.IntegralHeight = false;
-			this.lstUsers.ItemHeight = 15;
+			this.lstUsers.ItemHeight = 25;
 			this.lstUsers.Location = new System.Drawing.Point(0, 30);
 			this.lstUsers.Name = "lstUsers";
 			this.lstUsers.Size = new System.Drawing.Size(160, 386);
@@ -188,7 +189,7 @@
 
 		#endregion
 
-		// DEKLARÁCIÓK - csak itt lehetnek!
+		// DEKLARÁCIÓK
 		private System.Windows.Forms.ListBox lstMessages;
 		private System.Windows.Forms.TextBox txtMessage;
 		private System.Windows.Forms.Button btnSend;
