@@ -18,7 +18,7 @@ namespace ChatAI
         static async Task Main(string[] args)
         {
             _ai = new AiService();
-            Console.WriteLine("=== ChatAI Bot (Auto-Moderator) ===");
+            Console.WriteLine("=== ChatAI Bot v2 ===");
             await ConnectAsync();
         }
 
@@ -28,7 +28,7 @@ namespace ChatAI
             {
                 try
                 {
-                    Console.WriteLine("Csatlakozás...");
+                    Console.WriteLine("Connecting...");
                     _client = new TcpClient();
                     await _client.ConnectAsync("127.0.0.1", 5000);
                     _stream = _client.GetStream();
@@ -37,12 +37,12 @@ namespace ChatAI
                     await Task.Delay(500);
                     await Protocol.SendMessageAsync(_stream, "LOGIN:ChatBot:secret");
 
-                    Console.WriteLine("Sikeres belépés!");
+                    Console.WriteLine("Connected!");
                     await ReceiveLoop();
                 }
                 catch
                 {
-                    Console.WriteLine("Hiba, újrapróbálkozás 5mp múlva...");
+                    Console.WriteLine("Connection error, retrying in 5s...");
                     await Task.Delay(5000);
                 }
             }
@@ -55,7 +55,7 @@ namespace ChatAI
                 string msg = await Protocol.ReceiveMessageAsync(_stream);
                 if (msg == null) break;
 
-                if (msg.StartsWith("USERS:") || msg.StartsWith("FILE:") || msg.Contains("ChatBot")) continue;
+                if (msg.StartsWith("USERS:") || msg.StartsWith("FILE:") || msg.Contains("ChatBot:")) continue;
 
                 if (msg.StartsWith("(privát)"))
                 {
@@ -63,22 +63,24 @@ namespace ChatAI
                     string sender = parts[0].Replace("(privát)", "").Trim();
                     string content = parts.Length > 1 ? parts[1].Trim() : "";
 
-                    Console.WriteLine($"Privát: {sender}: {content}");
+                    Console.WriteLine($"Private: {sender}: {content}");
 
                     string reply = await _ai.GetAnswerAsync(content);
                     await Protocol.SendMessageAsync(_stream, $"PRIVATE:{sender}:{reply}");
                 }
                 else
                 {
-                    if (msg.Contains(":"))
-                    {
-                        var parts = msg.Split(':', 2);
-                        if (parts.Length < 2) continue;
+                    int separatorIndex = msg.IndexOf(": ");
 
-                        string senderInfo = parts[0];
-                        string content = parts[1].Trim();
-                        string actualSender = senderInfo;
-                        if (senderInfo.Contains(" ")) actualSender = senderInfo.Split(' ').Last();
+                    if (separatorIndex > 0)
+                    {
+                        string header = msg.Substring(0, separatorIndex);
+                        string content = msg.Substring(separatorIndex + 2).Trim();
+
+                        string[] headerParts = header.Split(' ');
+                        string actualSender = headerParts.Last();
+
+                        if (actualSender == "ChatBot") continue;
 
                         bool isBad = await _ai.IsOffensiveAsync(content);
 
@@ -88,11 +90,11 @@ namespace ChatAI
                             _warnings[actualSender]++;
 
                             int count = _warnings[actualSender];
-                            Console.WriteLine($"[MODERÁTOR] {actualSender} szabálysértés ({count}/3).");
+                            Console.WriteLine($"Offense: {actualSender} ({count}/3)");
 
                             if (count < 3)
                             {
-                                await Protocol.SendMessageAsync(_stream, $"FIGYELEM {actualSender}! Sértő beszéd. ({count}/3 figyelmeztetés)");
+                                await Protocol.SendMessageAsync(_stream, $"FIGYELEM {actualSender}! Ez sértő beszéd volt. ({count}/3 figyelmeztetés)");
                             }
                             else
                             {
