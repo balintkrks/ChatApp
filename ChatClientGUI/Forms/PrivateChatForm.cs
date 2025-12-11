@@ -90,17 +90,28 @@ namespace ChatClientGUI.Forms
 
 		private void LstPrivateMessages_MeasureItem(object sender, MeasureItemEventArgs e)
 		{
-			if (e.Index < 0 || e.Index >= lstPrivateMessages.Items.Count) return;
-			string fullMsg = lstPrivateMessages.Items[e.Index].ToString();
+            if (e.Index < 0 || e.Index >= lstPrivateMessages.Items.Count) return;
+            string fullMsg = lstPrivateMessages.Items[e.Index].ToString();
+            string content = fullMsg;
 
-			
-			string content = fullMsg;
-			if (fullMsg.StartsWith("Me:")) content = fullMsg.Substring(3).Trim();
+            if (fullMsg.StartsWith("Me:"))
+            {
+                content = fullMsg.Substring(fullMsg.IndexOf(':') + 1).Trim();
+            }
+            else
+            {
+                int colonIndex = fullMsg.IndexOf(':');
+                if (colonIndex > -1 && colonIndex < fullMsg.Length - 1)
+                {
+                    content = fullMsg.Substring(colonIndex + 1).Trim();
+                }
+            }
 
-			int maxWidth = (int)(lstPrivateMessages.Width * 0.7);
-			Size size = TextRenderer.MeasureText(e.Graphics, content, new Font("Segoe UI", 10), new Size(maxWidth, 0), TextFormatFlags.WordBreak);
-			e.ItemHeight = size.Height + 35; // + padding
-		}
+            int maxWidth = (int)(lstPrivateMessages.Width * 0.7);
+            if (string.IsNullOrWhiteSpace(content)) content = " ";
+            Size size = TextRenderer.MeasureText(e.Graphics, content, new Font("Segoe UI", 10), new Size(maxWidth, 0), TextFormatFlags.WordBreak);
+            e.ItemHeight = size.Height + 35;
+        }
 
 		private void LstPrivateMessages_DrawItem(object sender, DrawItemEventArgs e)
 		{
