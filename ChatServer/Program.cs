@@ -164,6 +164,7 @@ class Program
                         {
                             await Protocol.SendMessageAsync(stream, $"SERVER: A felhasználó ({recipient}) nem található vagy offline.");
                         }
+                        await Protocol.SendMessageAsync(stream, $"{recipient}: {message}");
                     }
                     continue;
                 }
