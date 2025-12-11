@@ -202,6 +202,28 @@ namespace ChatClientGUI.Forms
 			}
 		}
 
-		private void OnMessageReceived(string msg) { if (IsDisposed || !IsHandleCreated) return; Invoke((MethodInvoker)delegate { if (msg.StartsWith($"(privát) {_targetUser}:") || msg.StartsWith($"(private) {_targetUser}:")) { lstPrivateMessages.Items.Add(msg); lstPrivateMessages.TopIndex = lstPrivateMessages.Items.Count - 1; } }); }
-	}
+        private void OnMessageReceived(string msg)
+        {
+            if (IsDisposed || !IsHandleCreated) return;
+
+            Invoke((MethodInvoker)delegate {
+                Console.WriteLine($"[Private] Kapott üzenet: {msg}");
+                bool isPrivate = msg.StartsWith("(privát)") || msg.StartsWith("(private)");
+                if (isPrivate)
+                {
+                    int colonIndex = msg.IndexOf(':');
+                    if (colonIndex > -1)
+                    {
+                        string senderNamePart = msg.Substring(0, colonIndex);
+                        string senderName = senderNamePart.Split(' ').Last();
+                        if (senderName.Equals(_targetUser, StringComparison.OrdinalIgnoreCase))
+                        {
+                            lstPrivateMessages.Items.Add(msg);
+                            lstPrivateMessages.TopIndex = lstPrivateMessages.Items.Count - 1;
+                        }
+                    }
+                }
+            });
+        }
+    }
 }
