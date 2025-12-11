@@ -157,8 +157,13 @@ class Program
                         var message = parts[2];
                         if (UserClients.TryGetValue(recipient, out var recipientClient))
                         {
-                            var recipientStream = recipientClient.GetStream();
-                            await Protocol.SendMessageAsync(recipientStream, $"{username}: {message}");
+                            try
+                            {
+                                var recipientStream = recipientClient.GetStream();
+                                string formattedMsg = $"(privát) {username}: {message}";
+                                await Protocol.SendMessageAsync(recipientStream, formattedMsg);
+                            }
+                            catch { }
                         }
                         else
                         {
