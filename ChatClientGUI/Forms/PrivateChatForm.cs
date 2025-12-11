@@ -80,7 +80,9 @@ namespace ChatClientGUI.Forms
 				}
 			};
 
-			lstPrivateMessages.MeasureItem += LstPrivateMessages_MeasureItem;
+            lstPrivateMessages.DrawMode = DrawMode.OwnerDrawVariable;
+
+            lstPrivateMessages.MeasureItem += LstPrivateMessages_MeasureItem;
 			lstPrivateMessages.DrawItem += LstPrivateMessages_DrawItem;
 
 			this.FormClosing += (s, e) => _service.MessageReceived -= OnMessageReceived;
