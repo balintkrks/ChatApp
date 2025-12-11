@@ -164,12 +164,19 @@ namespace ChatClientGUI.Forms
 		{
 			if (string.IsNullOrWhiteSpace(txtPrivateInput.Text) || txtPrivateInput.Text == PLACEHOLDER) return;
 			string msg = txtPrivateInput.Text;
-			await _service.SendPrivateMessageAsync(_targetUser, msg);
-			lstPrivateMessages.Items.Add($"Me: {msg}");
-			txtPrivateInput.Clear();
-			txtPrivateInput.Focus();
-			lstPrivateMessages.TopIndex = lstPrivateMessages.Items.Count - 1;
-		}
+            lstPrivateMessages.Items.Add($"Me: {msg}");
+            lstPrivateMessages.TopIndex = lstPrivateMessages.Items.Count - 1;
+            txtPrivateInput.Clear();
+            txtPrivateInput.Focus();
+            try
+            {
+                await _service.SendPrivateMessageAsync(_targetUser, msg);
+            }
+            catch (Exception ex)
+            {
+                lstPrivateMessages.Items.Add($"[Rendszer]: Hiba a küldésnél! ({ex.Message})");
+            }
+        }
 
 		
 		private void PnlBottom_Paint(object sender, PaintEventArgs e)
