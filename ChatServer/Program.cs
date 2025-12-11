@@ -158,7 +158,7 @@ class Program
                         if (UserClients.TryGetValue(recipient, out var recipientClient))
                         {
                             var recipientStream = recipientClient.GetStream();
-                            await Protocol.SendMessageAsync(recipientStream, $"(privát) {username}: {message}");
+                            await Protocol.SendMessageAsync(recipientStream, $"{username}: {message}");
                         }
                     }
                     continue;
