@@ -160,6 +160,10 @@ class Program
                             var recipientStream = recipientClient.GetStream();
                             await Protocol.SendMessageAsync(recipientStream, $"{username}: {message}");
                         }
+                        else
+                        {
+                            await Protocol.SendMessageAsync(stream, $"SERVER: A felhasználó ({recipient}) nem található vagy offline.");
+                        }
                     }
                     continue;
                 }
