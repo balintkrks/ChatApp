@@ -157,19 +157,9 @@ class Program
                         var message = parts[2];
                         if (UserClients.TryGetValue(recipient, out var recipientClient))
                         {
-                            try
-                            {
-                                var recipientStream = recipientClient.GetStream();
-                                string formattedMsg = $"(privát) {username}: {message}";
-                                await Protocol.SendMessageAsync(recipientStream, formattedMsg);
-                            }
-                            catch { }
+                            var recipientStream = recipientClient.GetStream();
+                            await Protocol.SendMessageAsync(recipientStream, $"(privát) {username}: {message}");
                         }
-                        else
-                        {
-                            await Protocol.SendMessageAsync(stream, $"SERVER: A felhasználó ({recipient}) nem található vagy offline.");
-                        }
-                        await Protocol.SendMessageAsync(stream, $"{recipient}: {message}");
                     }
                     continue;
                 }
