@@ -192,6 +192,21 @@ class Program
 
                         if (fileBytes != null && fileBytes.Length == fileSize)
                         {
+                            string sizeReadable;
+                            if (fileSize > 1024 * 1024)
+                                sizeReadable = $"{fileSize / (1024.0 * 1024.0):F2} MB";
+                            else
+                                sizeReadable = $"{fileSize / 1024.0:F2} KB";
+
+                            if (!string.IsNullOrEmpty(recipient))
+                            {
+                                ServerLogger.Log($"{username} -> {recipient}: Fájl küldése: '{fileName}' ({sizeReadable})", "FILE");
+                            }
+                            else
+                            {
+                                ServerLogger.Log($"{username} -> GLOBAL: Fájl küldése: '{fileName}' ({sizeReadable})", "FILE");
+                            }
+
                             if (!string.IsNullOrEmpty(recipient))
                             {
                                 if (UserClients.TryGetValue(recipient, out var recipientClient))
@@ -201,9 +216,14 @@ class Program
                                     await Protocol.SendBytesAsync(rs, fileBytes);
                                     await Protocol.SendMessageAsync(rs, "FILE_END");
                                 }
+                                else
+                                {
+                                    ServerLogger.Log($"HIBA: Nem sikerült kézbesíteni a fájlt '{recipient}' részére (offline).", "ERROR");
+                                }
                             }
                             else
                             {
+
                                 foreach (var kv in Clients)
                                 {
                                     try
