@@ -35,6 +35,9 @@ namespace ChatServer
                 case "SYSTEM": 
                     color = ConsoleColor.Magenta; 
                     break;
+                case "FILE": 
+                    color = ConsoleColor.DarkCyan; 
+                    break;
             }
 
             string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
