@@ -9,6 +9,7 @@ namespace ChatServer
 {
     public static class ServerLogger
     {
-
+        private static readonly string LogFilePath = "server_log.txt";
+        private static readonly object _lock = new object();
     }
 }
