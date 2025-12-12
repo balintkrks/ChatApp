@@ -1,10 +1,11 @@
-﻿using System.Net;
-using System.Net.Sockets;
-using System.Collections.Concurrent;
-using System.Text;
-using ChatCommon;
+﻿using ChatCommon;
 using ChatCommon.Utils;
+using ChatServer;
 using ChatServer.Data;
+using System.Collections.Concurrent;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
 
 class Program
 {
@@ -16,7 +17,7 @@ class Program
         Database.Init();
         var listener = new TcpListener(IPAddress.Any, 5000);
         listener.Start();
-        Console.WriteLine("Server started on port 5000.");
+        ServerLogger.Log("A szerver elindult az 5000-es porton.", "SYSTEM");
 
         while (true)
         {
@@ -29,7 +30,8 @@ class Program
 
     static async Task HandleClient(TcpClient client, NetworkStream stream)
     {
-        Console.WriteLine("Client connected.");
+        string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
+        ServerLogger.Log($"Új kapcsolat érkezett innen: {clientIp}", "SYSTEM");
         string username = "Anon";
         bool isLoggedIn = false;
 
