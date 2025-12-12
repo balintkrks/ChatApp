@@ -155,13 +155,13 @@ class Program
                 if (msg.StartsWith("PRIVATE:"))
                 {
                     var parts = msg.Split(':', 3);
-                    ServerLogger.Log($"{username} -> {recipient}: {message}", "PRIVATE");
                     if (parts.Length == 3)
                     {
                         var recipient = parts[1];
                         var message = parts[2];
                         if (UserClients.TryGetValue(recipient, out var recipientClient))
                         {
+
                             try
                             {
                                 var recipientStream = recipientClient.GetStream();
@@ -169,6 +169,11 @@ class Program
                                 await Protocol.SendMessageAsync(recipientStream, formattedMsg);
                             }
                             catch { }
+
+                            ServerLogger.Log($"{username} -> {recipient}: {message}", "PRIVATE");
+                            var recipientStream = recipientClient.GetStream();
+                            await Protocol.SendMessageAsync(recipientStream, $"(privát) {username}: {message}");
+
                         }
                         else
                         {
