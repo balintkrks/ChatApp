@@ -244,6 +244,10 @@ class Program
                 ServerLogger.Log($"{username} kijelentkezett. (IP: {clientIp})", "LOGOUT");
                 _ = BroadcastUserList();
             }
+            else
+            {
+                ServerLogger.Log($"Ismeretlen kliens bontotta a kapcsolatot: {clientIp}", "SYSTEM");
+            }
             client.Close();
         }
     }
