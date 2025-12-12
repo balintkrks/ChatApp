@@ -39,6 +39,22 @@ namespace ChatServer
 
             string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
             string logLine = $"[{timestamp}] [{type}] {message}";
+
+            lock(_lock)
+            {
+                Console.ForegroundColor = color;
+                Console.WriteLine(logLine);
+                Console.ResetColor();
+
+                try
+                {
+                    File.AppendAllText(LogFilePath, logLine + Environment.NewLine);
+                }
+                catch 
+                {
+
+                }
+            }
         }
     }
 }
