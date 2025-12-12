@@ -14,7 +14,8 @@ namespace ChatServer
 
         public static void Log(string message, string type = "INFO")
         {
-
+            ConsoleColor color = ConsoleColor.White;
+            switch ()
         }
     }
 }
