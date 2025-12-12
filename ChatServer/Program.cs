@@ -94,9 +94,11 @@ class Program
                             {
                                 await Protocol.SendMessageAsync(stream, $"{m.Timestamp:HH:mm} {m.Sender}: {m.Content}");
                             }
+                            ServerLogger.Log($"Sikeres bejelentkezés: {username} ({clientIp})", "LOGIN");
                         }
                         else
                         {
+                            ServerLogger.Log($"Sikertelen bejelentkezési kísérlet: {user} ({clientIp}) - Rossz jelszó", "ERROR");
                             await Protocol.SendMessageAsync(stream, "SERVER: Login failed");
                         }
                     }
@@ -153,6 +155,7 @@ class Program
                 if (msg.StartsWith("PRIVATE:"))
                 {
                     var parts = msg.Split(':', 3);
+                    ServerLogger.Log($"{username} -> {recipient}: {message}", "PRIVATE");
                     if (parts.Length == 3)
                     {
                         var recipient = parts[1];
