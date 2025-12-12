@@ -36,6 +36,9 @@ namespace ChatServer
                     color = ConsoleColor.Magenta; 
                     break;
             }
+
+            string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            string logLine = $"[{timestamp}] [{type}] {message}";
         }
     }
 }
