@@ -11,5 +11,10 @@ namespace ChatServer
     {
         private static readonly string LogFilePath = "server_log.txt";
         private static readonly object _lock = new object();
+
+        public static void Log(string message, string type = "INFO")
+        {
+
+        }
     }
 }
