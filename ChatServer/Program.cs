@@ -221,6 +221,7 @@ class Program
                 }
 
                 Database.AddMessage(username, msg);
+                ServerLogger.Log($"{username}: {msg}", "GLOBAL");
                 string broadcast = $"{DateTime.Now:HH:mm} {username}: {msg}";
                 Console.WriteLine(broadcast);
 
@@ -240,6 +241,7 @@ class Program
             if (isLoggedIn && !string.IsNullOrEmpty(username))
             {
                 UserClients.TryRemove(username, out _);
+                ServerLogger.Log($"{username} kijelentkezett. (IP: {clientIp})", "LOGOUT");
                 _ = BroadcastUserList();
             }
             client.Close();
