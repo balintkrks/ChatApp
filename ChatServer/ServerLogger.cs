@@ -15,7 +15,27 @@ namespace ChatServer
         public static void Log(string message, string type = "INFO")
         {
             ConsoleColor color = ConsoleColor.White;
-            switch ()
+            switch (type)
+            {
+                case "LOGIN": 
+                    color = ConsoleColor.Green; 
+                    break;
+                case "LOGOUT": 
+                    color = ConsoleColor.Yellow; 
+                    break;
+                case "ERROR": 
+                    color = ConsoleColor.Red; 
+                    break;
+                case "PRIVATE": 
+                    color = ConsoleColor.Cyan; 
+                    break;
+                case "GLOBAL": 
+                    color = ConsoleColor.Gray; 
+                    break;
+                case "SYSTEM": 
+                    color = ConsoleColor.Magenta; 
+                    break;
+            }
         }
     }
 }
