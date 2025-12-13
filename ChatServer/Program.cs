@@ -147,11 +147,13 @@ class Program
                             else
                             {
                                 Console.WriteLine($"[DEBUG] FAILED: User {targetUser} not found in active clients.");
+                                ServerLogger.Log($"[ERROR] {targetUser} nem található, [KICK] elutasítva", "ERROR");
                             }
                         }
                         else
                         {
                             Console.WriteLine($"[DEBUG] FAILED: Permission denied for {username}. Only ChatBot can kick.");
+                            ServerLogger.Log($"[ERROR] [KICK] elutasítva: {username} ({clientIp})", "ERROR");
                         }
                     }
                     continue;
