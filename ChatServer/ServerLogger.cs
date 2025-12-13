@@ -23,6 +23,9 @@ namespace ChatServer
                 case "LOGOUT": 
                     color = ConsoleColor.Yellow; 
                     break;
+                case "REGISTRATION":
+                    color = ConsoleColor.DarkGreen;
+                    break;
                 case "ERROR": 
                     color = ConsoleColor.Red; 
                     break;
