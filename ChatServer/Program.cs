@@ -66,6 +66,8 @@ class Program
 
                         bool ok = Database.AddUser(user, passHash);
                         await Protocol.SendMessageAsync(stream, ok ? "SERVER: Registration successful" : "SERVER: Registration failed");
+                        if (ok) ServerLogger.Log($"Sikeres regisztráció: {user} ({clientIp})", "REGISTRATION");
+                        else ServerLogger.Log($"Sikertelen regisztráció: ({clientIp})", "ERROR");
                     }
                     continue;
                 }
