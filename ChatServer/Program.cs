@@ -110,7 +110,7 @@ class Program
                 if (msg.StartsWith("KICK:"))
                 {
                     Console.WriteLine($"[DEBUG] KICK command received from {username}: {msg}");
-                    ServerLogger.Log($"[KICK] parancs érkezett tőle: {username} ({clientIp}) ekkor: {DateTime.Now:yyyy-mm-dd:HH:m}", "GLOBAL");
+                    ServerLogger.Log($"[KICK] parancs érkezett tőle: {username} ({clientIp})", "GLOBAL");
                     var parts = msg.Split(':', 2);
                     if (parts.Length == 2)
                     {
@@ -127,7 +127,7 @@ class Program
                                 {
                                     var targetStream = targetClient.GetStream();
                                     await Protocol.SendMessageAsync(targetStream, "SERVER: You have been kicked by the ChatBot.");
-                                    ServerLogger.Log($"[KICK] {targetUser} sikeresen kirúgva általa: {username} ({clientIp}) ekkor: {DateTime.Now:yyyy-mm-dd:HH:m}","KICK");
+                                    ServerLogger.Log($"[KICK] {targetUser} sikeresen kirúgva általa: {username} ({clientIp})","KICK");
                                 }
                                 catch { }
 
@@ -255,7 +255,6 @@ class Program
                 Database.AddMessage(username, msg);
                 ServerLogger.Log($"{username}: {msg}", "GLOBAL");
                 string broadcast = $"{DateTime.Now:HH:mm} {username}: {msg}";
-                Console.WriteLine(broadcast);
 
                 foreach (var kv in Clients)
                 {
