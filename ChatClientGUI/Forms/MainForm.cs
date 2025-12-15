@@ -65,6 +65,8 @@ namespace ChatClientGUI.Forms
             txtMessage.Enter += (s, e) => { if (txtMessage.Text == PLACEHOLDER) { txtMessage.Text = ""; txtMessage.ForeColor = Color.Black; } };
             txtMessage.Leave += (s, e) => { if (string.IsNullOrWhiteSpace(txtMessage.Text)) { txtMessage.Text = PLACEHOLDER; txtMessage.ForeColor = Color.Gray; } };
 
+            txtMessage.TextChanged += (s, e) => AdjustInputHeight();
+
             txtMessage.KeyDown += async (s, e) =>
             {
                 if (e.KeyCode == Keys.Enter && !e.Shift)
@@ -90,6 +92,31 @@ namespace ChatClientGUI.Forms
 
             lstUsers.Items.Add("[Global Chat]");
             lstUsers.SelectedIndex = 0;
+        }
+
+        private void AdjustInputHeight()
+        {
+            if (txtMessage.Text == PLACEHOLDER) return;
+
+            int padding = 25;
+            int minHeight = 50;
+            int maxHeight = 100;
+
+            Size sz = txtMessage.GetPreferredSize(new Size(txtMessage.Width, 0));
+            int requiredHeight = sz.Height + padding;
+
+            if (requiredHeight < minHeight) requiredHeight = minHeight;
+
+            if (requiredHeight >= maxHeight)
+            {
+                pnlBottom.Height = maxHeight;
+                txtMessage.ScrollBars = ScrollBars.Vertical;
+            }
+            else
+            {
+                pnlBottom.Height = requiredHeight;
+                txtMessage.ScrollBars = ScrollBars.None;
+            }
         }
 
         private (string Time, string Name, string Content) ParseMessage(string raw)
