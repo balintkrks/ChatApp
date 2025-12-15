@@ -86,7 +86,6 @@ namespace ChatClientGUI.Forms
 
             this.SizeChanged += (s, e) => { this.Invalidate(); UpdateControlRegions(); pnlBottom.Invalidate(); };
 
-
             lstMessages.DoubleClick += (s, e) => { if (lstMessages.SelectedItem != null) HandleFileDownload(lstMessages.SelectedItem.ToString()); };
             lstUsers.SelectedIndexChanged += (s, e) => { if (lstUsers.SelectedItem != null) HandleUserSelection(lstUsers.SelectedItem.ToString()); };
 
@@ -107,15 +106,26 @@ namespace ChatClientGUI.Forms
 
             if (requiredHeight < minHeight) requiredHeight = minHeight;
 
+            int selectionStart = txtMessage.SelectionStart;
+            int selectionLength = txtMessage.SelectionLength;
+            bool needsUpdate = false;
+
             if (requiredHeight >= maxHeight)
             {
-                pnlBottom.Height = maxHeight;
-                txtMessage.ScrollBars = ScrollBars.Vertical;
+                if (pnlBottom.Height != maxHeight) { pnlBottom.Height = maxHeight; needsUpdate = true; }
+                if (txtMessage.ScrollBars != ScrollBars.Vertical) txtMessage.ScrollBars = ScrollBars.Vertical;
             }
             else
             {
-                pnlBottom.Height = requiredHeight;
-                txtMessage.ScrollBars = ScrollBars.None;
+                if (pnlBottom.Height != requiredHeight) { pnlBottom.Height = requiredHeight; needsUpdate = true; }
+                if (txtMessage.ScrollBars != ScrollBars.None) txtMessage.ScrollBars = ScrollBars.None;
+            }
+
+            if (needsUpdate)
+            {
+                pnlBottom.Invalidate();
+                txtMessage.SelectionStart = selectionStart;
+                txtMessage.SelectionLength = selectionLength;
             }
         }
 
@@ -126,7 +136,6 @@ namespace ChatClientGUI.Forms
                 int closeBracket = raw.IndexOf(']');
                 if (closeBracket > 0) raw = raw.Substring(closeBracket + 1).Trim();
             }
-
             if (raw.StartsWith("(privát)") || raw.StartsWith("(private)"))
             {
                 raw = raw.Substring(8).Trim();
@@ -160,7 +169,6 @@ namespace ChatClientGUI.Forms
                 }
             }
             catch { }
-
             return ("", "", raw);
         }
 
@@ -174,8 +182,8 @@ namespace ChatClientGUI.Forms
             var parts = ParseMessage(fullMsg);
 
             int scrollBarWidth = SystemInformation.VerticalScrollBarWidth;
-            int safeWidth = lstMessages.Width - scrollBarWidth - 10;
-            int maxWidth = (int)(safeWidth * 0.7);
+            int safeWidth = lstMessages.Width - scrollBarWidth - 30;
+            int maxWidth = (int)(safeWidth * 0.75);
             if (maxWidth < 100) maxWidth = 100;
 
             Size size = TextRenderer.MeasureText(e.Graphics, parts.Content, new Font("Segoe UI", 10), new Size(maxWidth, 0), TextFormatFlags.WordBreak | TextFormatFlags.TextBoxControl);
@@ -185,11 +193,15 @@ namespace ChatClientGUI.Forms
         private void LstMessages_DrawItem(object sender, DrawItemEventArgs e)
         {
             if (e.Index < 0) return;
+
             e.Graphics.FillRectangle(Brushes.White, e.Bounds);
 
             string fullMsg = lstMessages.Items[e.Index].ToString();
             Graphics g = e.Graphics;
+
             g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            g.PixelOffsetMode = PixelOffsetMode.HighQuality;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
 
             if (fullMsg.Contains("FILE") || fullMsg.Contains("System") || fullMsg.Contains("Server") || fullMsg.Contains("SERVER:"))
@@ -206,28 +218,28 @@ namespace ChatClientGUI.Forms
             Color metaColor = isMe ? Color.FromArgb(220, 220, 220) : Color.Gray;
 
             int scrollBarWidth = SystemInformation.VerticalScrollBarWidth;
-            int safeWidth = lstMessages.Width - scrollBarWidth - 10;
-            int maxWidth = (int)(safeWidth * 0.7);
+            int safeWidth = lstMessages.Width - scrollBarWidth - 30;
+            int maxWidth = (int)(safeWidth * 0.75);
             if (maxWidth < 100) maxWidth = 100;
 
             Size contentSize = TextRenderer.MeasureText(g, parsed.Content, new System.Drawing.Font("Segoe UI", 10), new Size(maxWidth, 0), TextFormatFlags.WordBreak | TextFormatFlags.TextBoxControl);
 
-            int bubbleWidth = Math.Max(contentSize.Width + 40, 120);
+            int bubbleWidth = Math.Max(contentSize.Width + 30, 120);
             int bubbleHeight = contentSize.Height + 35;
 
             Rectangle bubbleRect;
             if (isMe)
-                bubbleRect = new Rectangle(e.Bounds.Right - bubbleWidth - 25, e.Bounds.Top + 5, bubbleWidth, bubbleHeight);
+                bubbleRect = new Rectangle(e.Bounds.Right - bubbleWidth - 15, e.Bounds.Top + 5, bubbleWidth, bubbleHeight);
             else
                 bubbleRect = new Rectangle(e.Bounds.Left + 15, e.Bounds.Top + 5, bubbleWidth, bubbleHeight);
 
-            using (GraphicsPath path = GetRoundedPath(bubbleRect, 12))
+            using (GraphicsPath path = CreateSmoothRoundedPath(bubbleRect, 14))
             using (var brush = new SolidBrush(bubbleColor))
             {
                 g.FillPath(brush, path);
             }
 
-            int paddingX = 12;
+            int paddingX = 15;
             int paddingY = 8;
             Font nameFont = new System.Drawing.Font("Segoe UI", 9, FontStyle.Bold);
             Size nameSize = TextRenderer.MeasureText(g, parsed.Name, nameFont);
@@ -235,16 +247,36 @@ namespace ChatClientGUI.Forms
             Point namePos = new Point(bubbleRect.Left + paddingX, bubbleRect.Top + paddingY);
             TextRenderer.DrawText(g, parsed.Name, nameFont, namePos, isMe ? Color.White : GetUserColor(parsed.Name));
 
-            Point timePos = new Point(namePos.X + nameSize.Width + 8, namePos.Y + 2);
-
+            Point timePos = new Point(namePos.X + nameSize.Width + 5, namePos.Y + 1);
             string displayTime = string.IsNullOrEmpty(parsed.Time) ? "" : parsed.Time;
             if (fullMsg.Contains("(privát)") || fullMsg.Contains("(private)")) displayTime = "🔒";
-
             TextRenderer.DrawText(g, displayTime, new System.Drawing.Font("Segoe UI", 8), timePos, metaColor);
 
-            Rectangle textRect = new Rectangle(bubbleRect.Left + paddingX, bubbleRect.Top + 25, bubbleRect.Width - (paddingX * 2), bubbleRect.Height - 30);
+            Rectangle textRect = new Rectangle(bubbleRect.Left + paddingX, bubbleRect.Top + 28, bubbleRect.Width - (paddingX * 2), bubbleRect.Height - 30);
             TextRenderer.DrawText(g, parsed.Content, new System.Drawing.Font("Segoe UI", 10),
                 textRect, textColor, TextFormatFlags.Left | TextFormatFlags.Top | TextFormatFlags.WordBreak | TextFormatFlags.TextBoxControl);
+        }
+
+        private GraphicsPath CreateSmoothRoundedPath(Rectangle rect, int radius)
+        {
+            GraphicsPath path = new GraphicsPath();
+            int diameter = radius * 2;
+            Size size = new Size(diameter, diameter);
+            Rectangle arc = new Rectangle(rect.Location, size);
+
+            path.AddArc(arc, 180, 90);
+
+            arc.X = rect.Right - diameter;
+            path.AddArc(arc, 270, 90);
+
+            arc.Y = rect.Bottom - diameter;
+            path.AddArc(arc, 0, 90);
+
+            arc.X = rect.Left;
+            path.AddArc(arc, 90, 90);
+
+            path.CloseFigure();
+            return path;
         }
 
         private Color GetUserColor(string username)
@@ -254,18 +286,6 @@ namespace ChatClientGUI.Forms
             int g = ((hash / 100) % 120) + 50;
             int b = ((hash / 10000) % 120) + 50;
             return Color.FromArgb(r, g, b);
-        }
-
-        private GraphicsPath GetRoundedPath(Rectangle rect, int radius)
-        {
-            GraphicsPath path = new GraphicsPath();
-            int d = radius * 2;
-            path.AddArc(rect.X, rect.Y, d, d, 180, 90);
-            path.AddArc(rect.Right - d, rect.Y, d, d, 270, 90);
-            path.AddArc(rect.Right - d, rect.Bottom - d, d, d, 0, 90);
-            path.AddArc(rect.X, rect.Bottom - d, d, d, 90, 90);
-            path.CloseFigure();
-            return path;
         }
 
         private void LstUsers_DrawItem(object sender, DrawItemEventArgs e)
@@ -294,17 +314,21 @@ namespace ChatClientGUI.Forms
 
         private void PnlBottom_Paint(object sender, PaintEventArgs e)
         {
-            e.Graphics.SmoothingMode = SmoothingMode.HighQuality;
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
             using (var pen = new Pen(Color.FromArgb(230, 230, 230))) { e.Graphics.DrawLine(pen, 0, 0, pnlBottom.Width, 0); }
-            Rectangle rect = new Rectangle(txtMessage.Location.X - 10, txtMessage.Location.Y - 5, txtMessage.Width + 20, txtMessage.Height + 10);
-            using (GraphicsPath path = GetRoundedPath(rect, 18)) using (var brush = new SolidBrush(Color.FromArgb(245, 245, 245))) { e.Graphics.FillPath(brush, path); }
+
+            Rectangle rect = new Rectangle(txtMessage.Location.X - 15, txtMessage.Location.Y - 5, txtMessage.Width + 30, txtMessage.Height + 10);
+            using (GraphicsPath path = CreateSmoothRoundedPath(rect, 12))
+            using (var brush = new SolidBrush(Color.FromArgb(245, 245, 245)))
+            {
+                e.Graphics.FillPath(brush, path);
+            }
         }
 
         private void UpdateControlRegions()
         {
             using (GraphicsPath path = new GraphicsPath()) { path.AddEllipse(0, 0, btnSend.Width, btnSend.Height); btnSend.Region = new Region(path); }
             using (GraphicsPath path = new GraphicsPath()) { path.AddEllipse(0, 0, btnFile.Width, btnFile.Height); btnFile.Region = new Region(path); }
-
         }
 
         protected override void OnPaint(PaintEventArgs e) { e.Graphics.SmoothingMode = SmoothingMode.AntiAlias; using (Pen pen = new Pen(Color.LightGray, 1)) { e.Graphics.DrawRectangle(pen, 0, 0, this.Width - 1, this.Height - 1); } }
