@@ -1,10 +1,11 @@
-﻿using System.Net;
-using System.Net.Sockets;
-using System.Collections.Concurrent;
-using System.Text;
-using ChatCommon;
+﻿using ChatCommon;
 using ChatCommon.Utils;
+using ChatServer;
 using ChatServer.Data;
+using System.Collections.Concurrent;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
 
 class Program
 {
@@ -16,7 +17,7 @@ class Program
         Database.Init();
         var listener = new TcpListener(IPAddress.Any, 5000);
         listener.Start();
-        Console.WriteLine("Server started on port 5000.");
+        ServerLogger.Log("A szerver elindult az 5000-es porton.", "SYSTEM");
 
         while (true)
         {
@@ -29,7 +30,8 @@ class Program
 
     static async Task HandleClient(TcpClient client, NetworkStream stream)
     {
-        Console.WriteLine("Client connected.");
+        string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
+        ServerLogger.Log($"Új kapcsolat érkezett innen: {clientIp}", "SYSTEM");
         string username = "Anon";
         bool isLoggedIn = false;
 
@@ -44,11 +46,12 @@ class Program
 
                 if (msg == "LOGIN_ANON")
                 {
-                    username = $"Anon_{Guid.NewGuid().ToString().Substring(0, 4)}";
+                    string anonId = Guid.NewGuid().ToString().Substring(0, 4);
+                    username = $"Anon_{anonId}";
                     UserClients[username] = client;
                     isLoggedIn = true;
 
-                    await Protocol.SendMessageAsync(stream, $"SERVER: Login successful (Anon)");
+                    await Protocol.SendMessageAsync(stream, $"SERVER: Login successful. Assigned ID: {username}");
                     await BroadcastUserList();
                     continue;
                 }
@@ -64,6 +67,8 @@ class Program
 
                         bool ok = Database.AddUser(user, passHash);
                         await Protocol.SendMessageAsync(stream, ok ? "SERVER: Registration successful" : "SERVER: Registration failed");
+                        if (ok) ServerLogger.Log($"Sikeres regisztráció: {user} ({clientIp})", "REGISTRATION");
+                        else ServerLogger.Log($"Sikertelen regisztráció: ({clientIp})", "ERROR");
                     }
                     continue;
                 }
@@ -92,9 +97,11 @@ class Program
                             {
                                 await Protocol.SendMessageAsync(stream, $"{m.Timestamp:HH:mm} {m.Sender}: {m.Content}");
                             }
+                            ServerLogger.Log($"Sikeres bejelentkezés: {username} ({clientIp})", "LOGIN");
                         }
                         else
                         {
+                            ServerLogger.Log($"Sikertelen bejelentkezési kísérlet: {user} ({clientIp}) - Rossz jelszó", "ERROR");
                             await Protocol.SendMessageAsync(stream, "SERVER: Login failed");
                         }
                     }
@@ -103,22 +110,22 @@ class Program
 
                 if (msg.StartsWith("KICK:"))
                 {
-                    Console.WriteLine($"[DEBUG] KICK command received from {username}: {msg}");
+                    ServerLogger.Log($"[KICK] parancs érkezett tőle: {username} ({clientIp})", "GLOBAL");
                     var parts = msg.Split(':', 2);
                     if (parts.Length == 2)
                     {
                         string targetUser = parts[1].Trim();
-                        Console.WriteLine($"[DEBUG] Target user to kick: {targetUser}");
+                        ServerLogger.Log($"[KICK] parancs célpontja: {targetUser}", "KICK");
 
                         if (username.StartsWith("ChatBot"))
                         {
                             if (UserClients.TryGetValue(targetUser, out var targetClient))
                             {
-                                Console.WriteLine($"[DEBUG] User {targetUser} found. Executing kick.");
                                 try
                                 {
                                     var targetStream = targetClient.GetStream();
                                     await Protocol.SendMessageAsync(targetStream, "SERVER: You have been kicked by the ChatBot.");
+                                    ServerLogger.Log($"[KICK] {targetUser} sikeresen kirúgva általa: {username} ({clientIp})", "KICK");
                                 }
                                 catch { }
 
@@ -128,7 +135,6 @@ class Program
 
                                 await BroadcastUserList();
                                 string kickMsg = $"SERVER: {targetUser} has been kicked.";
-                                Console.WriteLine(kickMsg);
 
                                 foreach (var kv in Clients)
                                 {
@@ -137,12 +143,12 @@ class Program
                             }
                             else
                             {
-                                Console.WriteLine($"[DEBUG] FAILED: User {targetUser} not found in active clients.");
+                                ServerLogger.Log($"[ERROR] {targetUser} nem található, [KICK] elutasítva", "ERROR");
                             }
                         }
                         else
                         {
-                            Console.WriteLine($"[DEBUG] FAILED: Permission denied for {username}. Only ChatBot can kick.");
+                            ServerLogger.Log($"[ERROR] [KICK] elutasítva: {username} ({clientIp})", "ERROR");
                         }
                     }
                     continue;
@@ -155,10 +161,22 @@ class Program
                     {
                         var recipient = parts[1];
                         var message = parts[2];
+
                         if (UserClients.TryGetValue(recipient, out var recipientClient))
                         {
-                            var recipientStream = recipientClient.GetStream();
-                            await Protocol.SendMessageAsync(recipientStream, $"(privát) {username}: {message}");
+                            try
+                            {
+                                var recipientStream = recipientClient.GetStream();
+                                await Protocol.SendMessageAsync(recipientStream, $"(privát) {username}: {message}");
+                            }
+                            catch { }
+
+                            ServerLogger.Log($"{username} -> {recipient}: {message}", "PRIVATE");
+                            await Protocol.SendMessageAsync(stream, $"(privát) {username} -> {recipient}: {message}");
+                        }
+                        else
+                        {
+                            await Protocol.SendMessageAsync(stream, $"SERVER: A felhasználó ({recipient}) nem található vagy offline.");
                         }
                     }
                     continue;
@@ -177,6 +195,21 @@ class Program
 
                         if (fileBytes != null && fileBytes.Length == fileSize)
                         {
+                            string sizeReadable;
+                            if (fileSize > 1024 * 1024)
+                                sizeReadable = $"{fileSize / (1024.0 * 1024.0):F2} MB";
+                            else
+                                sizeReadable = $"{fileSize / 1024.0:F2} KB";
+
+                            if (!string.IsNullOrEmpty(recipient))
+                            {
+                                ServerLogger.Log($"{username} -> {recipient}: Fájl küldése: '{fileName}' ({sizeReadable})", "FILE");
+                            }
+                            else
+                            {
+                                ServerLogger.Log($"{username} -> GLOBAL: Fájl küldése: '{fileName}' ({sizeReadable})", "FILE");
+                            }
+
                             if (!string.IsNullOrEmpty(recipient))
                             {
                                 if (UserClients.TryGetValue(recipient, out var recipientClient))
@@ -186,9 +219,14 @@ class Program
                                     await Protocol.SendBytesAsync(rs, fileBytes);
                                     await Protocol.SendMessageAsync(rs, "FILE_END");
                                 }
+                                else
+                                {
+                                    ServerLogger.Log($"HIBA: Nem sikerült kézbesíteni a fájlt '{recipient}' részére (offline).", "ERROR");
+                                }
                             }
                             else
                             {
+
                                 foreach (var kv in Clients)
                                 {
                                     try
@@ -206,8 +244,8 @@ class Program
                 }
 
                 Database.AddMessage(username, msg);
+                ServerLogger.Log($"{username}: {msg}", "GLOBAL");
                 string broadcast = $"{DateTime.Now:HH:mm} {username}: {msg}";
-                Console.WriteLine(broadcast);
 
                 foreach (var kv in Clients)
                 {
@@ -225,7 +263,12 @@ class Program
             if (isLoggedIn && !string.IsNullOrEmpty(username))
             {
                 UserClients.TryRemove(username, out _);
+                ServerLogger.Log($"{username} kijelentkezett. (IP: {clientIp})", "LOGOUT");
                 _ = BroadcastUserList();
+            }
+            else
+            {
+                ServerLogger.Log($"Ismeretlen kliens bontotta a kapcsolatot: {clientIp}", "SYSTEM");
             }
             client.Close();
         }

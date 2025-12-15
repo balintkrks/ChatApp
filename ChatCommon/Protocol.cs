@@ -15,7 +15,6 @@ namespace ChatCommon
             await stream.WriteAsync(len, 0, len.Length);
             await stream.WriteAsync(payload, 0, payload.Length);
         }
-
         public static async Task<string?> ReceiveMessageAsync(Stream stream)
         {
             var lenBuf = new byte[4];
