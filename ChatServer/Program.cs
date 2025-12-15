@@ -46,11 +46,12 @@ class Program
 
                 if (msg == "LOGIN_ANON")
                 {
-                    username = $"Anon_{Guid.NewGuid().ToString().Substring(0, 4)}";
+                    string anonId = Guid.NewGuid().ToString().Substring(0, 4);
+                    username = $"Anon_{anonId}";
                     UserClients[username] = client;
                     isLoggedIn = true;
 
-                    await Protocol.SendMessageAsync(stream, $"SERVER: Login successful (Anon)");
+                    await Protocol.SendMessageAsync(stream, $"SERVER: Login successful. Assigned ID: {username}");
                     await BroadcastUserList();
                     continue;
                 }
@@ -160,17 +161,18 @@ class Program
                     {
                         var recipient = parts[1];
                         var message = parts[2];
+
                         if (UserClients.TryGetValue(recipient, out var recipientClient))
                         {
                             try
                             {
                                 var recipientStream = recipientClient.GetStream();
-                                string formattedMsg = $"(privát) {username}: {message}";
-                                await Protocol.SendMessageAsync(recipientStream, formattedMsg);
-                                ServerLogger.Log($"{username} -> {recipient}: {message}", "PRIVATE");
-                                await Protocol.SendMessageAsync(stream, $"(privát) {username}: {message}");
+                                await Protocol.SendMessageAsync(recipientStream, $"(privát) {username}: {message}");
                             }
                             catch { }
+
+                            ServerLogger.Log($"{username} -> {recipient}: {message}", "PRIVATE");
+                            await Protocol.SendMessageAsync(stream, $"(privát) {username} -> {recipient}: {message}");
                         }
                         else
                         {
