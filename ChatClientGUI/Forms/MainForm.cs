@@ -109,18 +109,15 @@ namespace ChatClientGUI.Forms
 
             try
             {
-
                 if (raw.StartsWith("Me:") || (raw.Contains("Me:") && !raw.Contains(": Me:")))
                 {
                     var parts = raw.Split(new[] { ' ' }, 2);
                     if (parts.Length == 2 && parts[0].Contains(":"))
                     {
-
                         var contentPart = parts[1].Substring(3).Trim();
                         return (parts[0], "Me", contentPart);
                     }
                 }
-
 
                 var firstSpaceIndex = raw.IndexOf(' ');
                 if (firstSpaceIndex > 0)
@@ -139,10 +136,8 @@ namespace ChatClientGUI.Forms
             }
             catch { }
 
-
             return ("", "", raw);
         }
-
 
         private void LstMessages_MeasureItem(object sender, MeasureItemEventArgs e)
         {
@@ -160,13 +155,12 @@ namespace ChatClientGUI.Forms
         private void LstMessages_DrawItem(object sender, DrawItemEventArgs e)
         {
             if (e.Index < 0) return;
-            e.Graphics.FillRectangle(Brushes.White, e.Bounds); // Fehér háttér a lista mögé
+            e.Graphics.FillRectangle(Brushes.White, e.Bounds);
 
             string fullMsg = lstMessages.Items[e.Index].ToString();
             Graphics g = e.Graphics;
             g.SmoothingMode = SmoothingMode.AntiAlias;
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-
 
             if (fullMsg.Contains("FILE") || fullMsg.Contains("System") || fullMsg.Contains("Server") || fullMsg.Contains("SERVER:"))
             {
@@ -177,11 +171,9 @@ namespace ChatClientGUI.Forms
             var parsed = ParseMessage(fullMsg);
             bool isMe = parsed.Name == "Me" || parsed.Name == _myUsername;
 
-
             Color bubbleColor = isMe ? Color.FromArgb(0, 132, 255) : Color.FromArgb(240, 240, 240);
             Color textColor = isMe ? Color.White : Color.Black;
             Color metaColor = isMe ? Color.FromArgb(220, 220, 220) : Color.Gray;
-
 
             int maxWidth = (int)(lstMessages.Width * 0.7);
             Size contentSize = TextRenderer.MeasureText(g, parsed.Content, new System.Drawing.Font("Segoe UI", 10), new Size(maxWidth, 0), TextFormatFlags.WordBreak);
@@ -195,15 +187,11 @@ namespace ChatClientGUI.Forms
             else
                 bubbleRect = new Rectangle(e.Bounds.Left + 15, e.Bounds.Top + 5, bubbleWidth, bubbleHeight);
 
-
             using (GraphicsPath path = GetRoundedPath(bubbleRect, 12))
             using (var brush = new SolidBrush(bubbleColor))
             {
                 g.FillPath(brush, path);
             }
-
-
-
 
             int paddingX = 12;
             int paddingY = 8;
@@ -213,10 +201,8 @@ namespace ChatClientGUI.Forms
             Point namePos = new Point(bubbleRect.Left + paddingX, bubbleRect.Top + paddingY);
             TextRenderer.DrawText(g, parsed.Name, nameFont, namePos, isMe ? Color.White : GetUserColor(parsed.Name));
 
-
-            Point timePos = new Point(namePos.X + nameSize.Width + 8, namePos.Y + 2); // Kicsit lejjebb igazítva
+            Point timePos = new Point(namePos.X + nameSize.Width + 8, namePos.Y + 2);
             TextRenderer.DrawText(g, parsed.Time, new System.Drawing.Font("Segoe UI", 8), timePos, metaColor);
-
 
             Rectangle textRect = new Rectangle(bubbleRect.Left + paddingX, bubbleRect.Top + 25, bubbleRect.Width - (paddingX * 2), bubbleRect.Height - 30);
             TextRenderer.DrawText(g, parsed.Content, new System.Drawing.Font("Segoe UI", 10),
@@ -243,7 +229,6 @@ namespace ChatClientGUI.Forms
             path.CloseFigure();
             return path;
         }
-
 
         private void LstUsers_DrawItem(object sender, DrawItemEventArgs e)
         {
@@ -309,8 +294,9 @@ namespace ChatClientGUI.Forms
                 {
                     bool fromPartner = msg.Contains($"(privát) {_currentChatPartner}:") || msg.Contains($"(private) {_currentChatPartner}:");
                     bool toPartner = msg.Contains($"[Private -> {_currentChatPartner}]");
+                    bool fileFromPartner = msg.Contains($"FILE [{_currentChatPartner}]:");
 
-                    if (fromPartner || toPartner)
+                    if (fromPartner || toPartner || fileFromPartner)
                         lstMessages.Items.Add(msg);
                 }
             }
@@ -338,7 +324,20 @@ namespace ChatClientGUI.Forms
         private async Task SendFile() { using var dialog = new OpenFileDialog(); if (dialog.ShowDialog() == DialogResult.OK) { string filePath = dialog.FileName; string fileName = Path.GetFileName(filePath); byte[] fileBytes = await File.ReadAllBytesAsync(filePath); string recipient = _currentChatPartner ?? ""; await _service.SendFileAsync(filePath, recipient); string displayMsg = !string.IsNullOrEmpty(recipient) ? $"FILE [Private -> {recipient}]: {fileName} ({fileBytes.Length} byte) >>> CLICK TO SAVE <<<" : $"FILE [Global]: {fileName} ({fileBytes.Length} byte) >>> CLICK TO SAVE <<<"; if (_pendingFiles.ContainsKey(displayMsg)) displayMsg += $" [{DateTime.Now.Ticks}]"; _pendingFiles[displayMsg] = (fileName, fileBytes); _allMessages.Add(displayMsg); RefreshChatView(); } }
         private void HandleFileDownload(string selectedText) { if (_pendingFiles.ContainsKey(selectedText)) { var fileData = _pendingFiles[selectedText]; var result = MessageBox.Show($"Save file?\n\nName: {fileData.FileName}\nSize: {fileData.Content.Length} bytes", "Download", MessageBoxButtons.YesNo, MessageBoxIcon.Question); if (result == DialogResult.Yes) { SaveFileToDisk(fileData.FileName, fileData.Content); string newText = selectedText.Replace(">>> CLICK TO SAVE <<<", "[SAVED]"); int index = _allMessages.IndexOf(selectedText); if (index != -1) _allMessages[index] = newText; _pendingFiles.Remove(selectedText); _pendingFiles[newText] = fileData; RefreshChatView(); } } }
         private void OnMessageReceived(string msg) { if (IsDisposed || !IsHandleCreated) return; Invoke((MethodInvoker)delegate { _allMessages.Add(msg); RefreshChatView(); }); }
-        private void OnFileReceived(string fileName, byte[] content) { if (IsDisposed || !IsHandleCreated) return; Invoke((MethodInvoker)delegate { string displayMsg = $"INCOMING FILE: {fileName} ({content.Length} byte) >>> CLICK TO SAVE <<<"; if (_pendingFiles.ContainsKey(displayMsg)) displayMsg += $" [{DateTime.Now.Ticks}]"; _pendingFiles[displayMsg] = (fileName, content); _allMessages.Add(displayMsg); RefreshChatView(); }); }
+
+        private void OnFileReceived(string sender, string fileName, byte[] content)
+        {
+            if (IsDisposed || !IsHandleCreated) return;
+            Invoke((MethodInvoker)delegate
+            {
+                string displayMsg = $"FILE [{sender}]: {fileName} ({content.Length} byte) >>> CLICK TO SAVE <<<";
+                if (_pendingFiles.ContainsKey(displayMsg)) displayMsg += $" [{DateTime.Now.Ticks}]";
+                _pendingFiles[displayMsg] = (fileName, content);
+                _allMessages.Add(displayMsg);
+                RefreshChatView();
+            });
+        }
+
         private void SaveFileToDisk(string fileName, byte[] content) { try { string folder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"); Directory.CreateDirectory(folder); string fullPath = Path.Combine(folder, fileName); File.WriteAllBytes(fullPath, content); MessageBox.Show($"File saved: {fullPath}", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information); } catch (Exception ex) { MessageBox.Show($"Error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error); } }
         private void OnConnectionLost() { if (IsDisposed || !IsHandleCreated) return; Invoke((MethodInvoker)delegate { MessageBox.Show("Disconnected from server.", "Connection Lost", MessageBoxButtons.OK, MessageBoxIcon.Warning); Application.Exit(); }); }
     }

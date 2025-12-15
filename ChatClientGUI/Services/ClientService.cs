@@ -14,7 +14,7 @@ namespace ChatClientGUI.Services
 
         public event Action<string> MessageReceived;
         public event Action ConnectionLost;
-        public event Action<string, byte[]> FileReceived;
+        public event Action<string, string, byte[]> FileReceived;
         public event Action<string[]> UserListReceived;
 
         public async Task<bool> ConnectAsync(string ip, int port)
@@ -110,7 +110,7 @@ namespace ChatClientGUI.Services
 
                             if (fileBytes != null)
                             {
-                                FileReceived?.Invoke(fileName, fileBytes);
+                                FileReceived?.Invoke(sender, fileName, fileBytes);
                             }
                         }
                         continue;
