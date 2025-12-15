@@ -109,25 +109,22 @@ class Program
 
                 if (msg.StartsWith("KICK:"))
                 {
-                    Console.WriteLine($"[DEBUG] KICK command received from {username}: {msg}");
                     ServerLogger.Log($"[KICK] parancs érkezett tőle: {username} ({clientIp})", "GLOBAL");
                     var parts = msg.Split(':', 2);
                     if (parts.Length == 2)
                     {
                         string targetUser = parts[1].Trim();
-                        Console.WriteLine($"[DEBUG] Target user to kick: {targetUser}");
                         ServerLogger.Log($"[KICK] parancs célpontja: {targetUser}", "KICK");
 
                         if (username.StartsWith("ChatBot"))
                         {
                             if (UserClients.TryGetValue(targetUser, out var targetClient))
                             {
-                                Console.WriteLine($"[DEBUG] User {targetUser} found. Executing kick.");
                                 try
                                 {
                                     var targetStream = targetClient.GetStream();
                                     await Protocol.SendMessageAsync(targetStream, "SERVER: You have been kicked by the ChatBot.");
-                                    ServerLogger.Log($"[KICK] {targetUser} sikeresen kirúgva általa: {username} ({clientIp})","KICK");
+                                    ServerLogger.Log($"[KICK] {targetUser} sikeresen kirúgva általa: {username} ({clientIp})", "KICK");
                                 }
                                 catch { }
 
@@ -137,7 +134,6 @@ class Program
 
                                 await BroadcastUserList();
                                 string kickMsg = $"SERVER: {targetUser} has been kicked.";
-                                Console.WriteLine(kickMsg);
 
                                 foreach (var kv in Clients)
                                 {
@@ -146,13 +142,11 @@ class Program
                             }
                             else
                             {
-                                Console.WriteLine($"[DEBUG] FAILED: User {targetUser} not found in active clients.");
                                 ServerLogger.Log($"[ERROR] {targetUser} nem található, [KICK] elutasítva", "ERROR");
                             }
                         }
                         else
                         {
-                            Console.WriteLine($"[DEBUG] FAILED: Permission denied for {username}. Only ChatBot can kick.");
                             ServerLogger.Log($"[ERROR] [KICK] elutasítva: {username} ({clientIp})", "ERROR");
                         }
                     }
@@ -168,25 +162,20 @@ class Program
                         var message = parts[2];
                         if (UserClients.TryGetValue(recipient, out var recipientClient))
                         {
-
                             try
                             {
                                 var recipientStream = recipientClient.GetStream();
                                 string formattedMsg = $"(privát) {username}: {message}";
                                 await Protocol.SendMessageAsync(recipientStream, formattedMsg);
+                                ServerLogger.Log($"{username} -> {recipient}: {message}", "PRIVATE");
+                                await Protocol.SendMessageAsync(stream, $"(privát) {username}: {message}");
                             }
                             catch { }
-
-                            ServerLogger.Log($"{username} -> {recipient}: {message}", "PRIVATE");
-                            var recipientStream = recipientClient.GetStream();
-                            await Protocol.SendMessageAsync(recipientStream, $"(privát) {username}: {message}");
-
                         }
                         else
                         {
                             await Protocol.SendMessageAsync(stream, $"SERVER: A felhasználó ({recipient}) nem található vagy offline.");
                         }
-                        await Protocol.SendMessageAsync(stream, $"{recipient}: {message}");
                     }
                     continue;
                 }
