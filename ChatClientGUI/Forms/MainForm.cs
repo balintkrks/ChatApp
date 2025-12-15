@@ -151,7 +151,7 @@ namespace ChatClientGUI.Forms
             int maxWidth = (int)(safeWidth * 0.7);
             if (maxWidth < 100) maxWidth = 100;
 
-            Size size = TextRenderer.MeasureText(e.Graphics, parts.Content, new Font("Segoe UI", 10), new Size(maxWidth, 0), TextFormatFlags.WordBreak);
+            Size size = TextRenderer.MeasureText(e.Graphics, parts.Content, new Font("Segoe UI", 10), new Size(maxWidth, 0), TextFormatFlags.WordBreak | TextFormatFlags.TextBoxControl);
             e.ItemHeight = size.Height + 45;
         }
 
@@ -183,9 +183,9 @@ namespace ChatClientGUI.Forms
             int maxWidth = (int)(safeWidth * 0.7);
             if (maxWidth < 100) maxWidth = 100;
 
-            Size contentSize = TextRenderer.MeasureText(g, parsed.Content, new System.Drawing.Font("Segoe UI", 10), new Size(maxWidth, 0), TextFormatFlags.WordBreak);
+            Size contentSize = TextRenderer.MeasureText(g, parsed.Content, new System.Drawing.Font("Segoe UI", 10), new Size(maxWidth, 0), TextFormatFlags.WordBreak | TextFormatFlags.TextBoxControl);
 
-            int bubbleWidth = Math.Max(contentSize.Width + 20, 120);
+            int bubbleWidth = Math.Max(contentSize.Width + 40, 120);
             int bubbleHeight = contentSize.Height + 35;
 
             Rectangle bubbleRect;
@@ -217,7 +217,7 @@ namespace ChatClientGUI.Forms
 
             Rectangle textRect = new Rectangle(bubbleRect.Left + paddingX, bubbleRect.Top + 25, bubbleRect.Width - (paddingX * 2), bubbleRect.Height - 30);
             TextRenderer.DrawText(g, parsed.Content, new System.Drawing.Font("Segoe UI", 10),
-                textRect, textColor, TextFormatFlags.Left | TextFormatFlags.Top | TextFormatFlags.WordBreak);
+                textRect, textColor, TextFormatFlags.Left | TextFormatFlags.Top | TextFormatFlags.WordBreak | TextFormatFlags.TextBoxControl);
         }
 
         private Color GetUserColor(string username)
