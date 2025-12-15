@@ -12,7 +12,6 @@ namespace ChatClientGUI.Forms
 {
     public partial class MainForm : Form
     {
-
         private const int WM_NCHITTEST = 0x84;
         private const int HTCLIENT = 0x1;
         private const int HTBOTTOMRIGHT = 17;
@@ -46,7 +45,6 @@ namespace ChatClientGUI.Forms
 
             lblTitle.Text = $"ChatApp - {_myUsername}";
 
-
             txtMessage.Text = PLACEHOLDER;
             txtMessage.ForeColor = Color.Gray;
             txtMessage.BackColor = Color.FromArgb(245, 245, 245);
@@ -63,7 +61,6 @@ namespace ChatClientGUI.Forms
             btnFile.Click += async (s, e) => await SendFile();
             btnCloseApp.Click += (s, e) => Application.Exit();
             btnMinimize.Click += (s, e) => this.WindowState = FormWindowState.Minimized;
-
 
             txtMessage.Enter += (s, e) => { if (txtMessage.Text == PLACEHOLDER) { txtMessage.Text = ""; txtMessage.ForeColor = Color.Black; } };
             txtMessage.Leave += (s, e) => { if (string.IsNullOrWhiteSpace(txtMessage.Text)) { txtMessage.Text = PLACEHOLDER; txtMessage.ForeColor = Color.Gray; } };
@@ -95,16 +92,17 @@ namespace ChatClientGUI.Forms
             lstUsers.SelectedIndex = 0;
         }
 
-
         private (string Time, string Name, string Content) ParseMessage(string raw)
         {
             if (raw.StartsWith("[Private ->"))
             {
                 int closeBracket = raw.IndexOf(']');
-                if (closeBracket > 0)
-                {
-                    raw = raw.Substring(closeBracket + 1).Trim();
-                }
+                if (closeBracket > 0) raw = raw.Substring(closeBracket + 1).Trim();
+            }
+
+            if (raw.StartsWith("(privát)") || raw.StartsWith("(private)"))
+            {
+                raw = raw.Substring(8).Trim();
             }
 
             try
@@ -147,7 +145,12 @@ namespace ChatClientGUI.Forms
             if (fullMsg.Contains("FILE") || fullMsg.Contains("System") || fullMsg.Contains("Server")) { e.ItemHeight = 40; return; }
 
             var parts = ParseMessage(fullMsg);
-            int maxWidth = (int)(lstMessages.Width * 0.7);
+
+            int scrollBarWidth = SystemInformation.VerticalScrollBarWidth;
+            int safeWidth = lstMessages.Width - scrollBarWidth - 10;
+            int maxWidth = (int)(safeWidth * 0.7);
+            if (maxWidth < 100) maxWidth = 100;
+
             Size size = TextRenderer.MeasureText(e.Graphics, parts.Content, new Font("Segoe UI", 10), new Size(maxWidth, 0), TextFormatFlags.WordBreak);
             e.ItemHeight = size.Height + 45;
         }
@@ -175,7 +178,11 @@ namespace ChatClientGUI.Forms
             Color textColor = isMe ? Color.White : Color.Black;
             Color metaColor = isMe ? Color.FromArgb(220, 220, 220) : Color.Gray;
 
-            int maxWidth = (int)(lstMessages.Width * 0.7);
+            int scrollBarWidth = SystemInformation.VerticalScrollBarWidth;
+            int safeWidth = lstMessages.Width - scrollBarWidth - 10;
+            int maxWidth = (int)(safeWidth * 0.7);
+            if (maxWidth < 100) maxWidth = 100;
+
             Size contentSize = TextRenderer.MeasureText(g, parsed.Content, new System.Drawing.Font("Segoe UI", 10), new Size(maxWidth, 0), TextFormatFlags.WordBreak);
 
             int bubbleWidth = Math.Max(contentSize.Width + 20, 120);
@@ -202,7 +209,11 @@ namespace ChatClientGUI.Forms
             TextRenderer.DrawText(g, parsed.Name, nameFont, namePos, isMe ? Color.White : GetUserColor(parsed.Name));
 
             Point timePos = new Point(namePos.X + nameSize.Width + 8, namePos.Y + 2);
-            TextRenderer.DrawText(g, parsed.Time, new System.Drawing.Font("Segoe UI", 8), timePos, metaColor);
+
+            string displayTime = string.IsNullOrEmpty(parsed.Time) ? "" : parsed.Time;
+            if (fullMsg.Contains("(privát)") || fullMsg.Contains("(private)")) displayTime = "🔒";
+
+            TextRenderer.DrawText(g, displayTime, new System.Drawing.Font("Segoe UI", 8), timePos, metaColor);
 
             Rectangle textRect = new Rectangle(bubbleRect.Left + paddingX, bubbleRect.Top + 25, bubbleRect.Width - (paddingX * 2), bubbleRect.Height - 30);
             TextRenderer.DrawText(g, parsed.Content, new System.Drawing.Font("Segoe UI", 10),
