@@ -85,7 +85,7 @@ namespace ChatClientGUI.Forms
             lblTitle.MouseDown += (s, e) => { ReleaseCapture(); SendMessage(this.Handle, 0x112, 0xf012, 0); };
 
             this.SizeChanged += (s, e) => { this.Invalidate(); UpdateControlRegions(); pnlBottom.Invalidate(); };
-            txtMessage.SizeChanged += (s, e) => { if (txtMessage.Width > 0 && txtMessage.Height > 0) txtMessage.Region = new Region(new Rectangle(2, 2, txtMessage.Width - 4, txtMessage.Height - 4)); };
+
 
             lstMessages.DoubleClick += (s, e) => { if (lstMessages.SelectedItem != null) HandleFileDownload(lstMessages.SelectedItem.ToString()); };
             lstUsers.SelectedIndexChanged += (s, e) => { if (lstUsers.SelectedItem != null) HandleUserSelection(lstUsers.SelectedItem.ToString()); };
@@ -304,7 +304,7 @@ namespace ChatClientGUI.Forms
         {
             using (GraphicsPath path = new GraphicsPath()) { path.AddEllipse(0, 0, btnSend.Width, btnSend.Height); btnSend.Region = new Region(path); }
             using (GraphicsPath path = new GraphicsPath()) { path.AddEllipse(0, 0, btnFile.Width, btnFile.Height); btnFile.Region = new Region(path); }
-            if (txtMessage.Width > 0) txtMessage.Region = new Region(new Rectangle(2, 2, txtMessage.Width - 4, txtMessage.Height - 4));
+
         }
 
         protected override void OnPaint(PaintEventArgs e) { e.Graphics.SmoothingMode = SmoothingMode.AntiAlias; using (Pen pen = new Pen(Color.LightGray, 1)) { e.Graphics.DrawRectangle(pen, 0, 0, this.Width - 1, this.Height - 1); } }
